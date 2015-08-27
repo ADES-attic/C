@@ -4,6 +4,7 @@
 // globals
 FILE *fpsv;
 int lineNum;
+xmlDocPtr doc;
 xmlNodePtr root_node;
 char line[512];
 char kw[31];
@@ -36,6 +37,8 @@ char *getPSVLine()
   char *p = fgets(line, sizeof(line), fpsv);
   if (p)
     lineNum++;
+  if (line[strlen(line) - 1] == '\n')
+    line[strlen(line) - 1] = 0;
   return p;
 }
 
@@ -54,17 +57,10 @@ void pxObs()
 {
 }
 
-// pxHeader
-//
-// on entry `line` contains a header line.
-// parse the observation header into the tree, skip blank lines,
-// on non-header, non-blank line, call pxObs.
-void pxHeader()
+// handle a single header line
+xmlNodePtr addHdr(xmlNodePtr parent)
 {
-  xmlNodePtr hdr = xmlNewChild(root_node, NULL,
-                               BAD_CAST "observationContext", NULL);
-
-  // handle a single # line
+  // parse keyword
   char *kwStart = line + 1 + strspn(line + 1, " ");
   if (!*kwStart)
     fatalPSV("missing header keyword");
@@ -73,8 +69,10 @@ void pxHeader()
   if (kwLen > sizeof(kw) - 1)
     fatalPSV("long keyword");
   strncpy(kw, kwStart, kwLen);
+  kw[kwLen] = 0;
   if (!xmlCheckUTF8(kw))
     fatalPSV("invalid characters present");
+  // parse text following keyword
   char *txt = NULL;
   if (kwEnd) {
     kwLen = trimSpace(kwEnd, &txt);
@@ -86,7 +84,27 @@ void pxHeader()
         fatalPSV("invalid characters present");
     }
   }
-  xmlNodePtr h1 = xmlNewChild(hdr, NULL, BAD_CAST kw, BAD_CAST txt);
+  return xmlNewChild(parent, NULL, BAD_CAST kw, BAD_CAST txt);
+}
+
+// pxHeader
+//
+// on entry `line` contains a header line.
+// parse the observation header into the tree, skip blank lines,
+// on non-header, non-blank line, call pxObs.
+void pxHeader()
+{
+  xmlNodePtr hdr = xmlNewChild(root_node, NULL,
+                               BAD_CAST "observationContext", NULL);
+  xmlNodePtr h1 = addHdr(hdr);
+  while (getPSVLine()) {
+    if (line[0] == '!')
+      addHdr(h1);
+    else if (line[0] == '#')
+      h1 = addHdr(hdr);
+    else
+      break;
+  }
 }
 
 // px
@@ -102,8 +120,6 @@ void px()
   if (!getPSVLine())
     fatal("can't read psv");
   do {
-    if (line[strlen(line) - 1] == '\n')
-      line[strlen(line) - 1] = 0;
     if (*line == '#')
       pxHeader();
     else if (*line != 0)
@@ -126,7 +142,7 @@ int main(int argc, char **argv)
     fatal1("can't open %s", argv[1]);
   }
 
-  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+  doc = xmlNewDoc(BAD_CAST "1.0");
   root_node = xmlNewNode(NULL, BAD_CAST "ObservationBatch");
   xmlDocSetRootElement(doc, root_node);
 
