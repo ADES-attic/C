@@ -144,7 +144,7 @@ int main(int argc, char **argv)
   }
 
   doc = xmlNewDoc(BAD_CAST "1.0");
-  root_node = xmlNewNode(NULL, BAD_CAST "ObservationBatch");
+  root_node = xmlNewNode(NULL, BAD_CAST "observationBatch");
   xmlDocSetRootElement(doc, root_node);
 
   px();
