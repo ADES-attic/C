@@ -83,6 +83,7 @@ xmlNodePtr addHdr(xmlNodePtr parent)
       if (!xmlCheckUTF8(txt))
         fatalPSV("invalid characters present");
     }
+    txt = xmlEncodeEntitiesReentrant(doc, txt);
   }
   return xmlNewChild(parent, NULL, BAD_CAST kw, BAD_CAST txt);
 }
