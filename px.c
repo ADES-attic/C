@@ -34,61 +34,108 @@ void fatalPSV(char *msg)
   fatal(m);
 }
 
-char *getPSVLine()
+#define LATIN1_WS "\t\n\v\f\r \x85\xA0"
+// TODO figure out the rest of Unicode whitespace. (white space property?
+// category Z? related functions is libxml2? in libunistring?)
+
+// trimRight trims white space from the right of a string, by punching a
+// null terminator byte.
+//
+// arg is an xmlChar*.  trimRight scans the entire string; any non UTF-8 is
+// detected and is a fatal error.
+size_t trimRight(xmlChar * p)
 {
-  // TODO fgets bad, getline better?
-  char *p = fgets(line, sizeof(line), fpsv);
-  if (p)
-    lineNum++;
-  if (line[strlen(line) - 1] == '\n')
-    line[strlen(line) - 1] = 0;
-  return p;
+  xmlChar *wsStart = NULL;
+  int all = strlen(p);
+  int c, len;
+  while (*p) {
+    len = all;
+    c = xmlGetUTF8Char(p, &len);
+    if (!len)
+      fatalPSV("invalid UTF-8");
+    if (xmlStrchr(LATIN1_WS, c)) {
+      if (!wsStart)
+        wsStart = p;
+    } else {
+      if (wsStart)
+        wsStart = NULL;
+    }
+    p += len;
+    all -= len;
+  }
+  if (!wsStart)
+    return 0;
+  *wsStart = 0;
+  return p - wsStart;
 }
 
-int trimSpace(char *s, char **start)
+// get non-blank line, validate UTF-8, trim trailing space.
+char *getPSVLine()
 {
-  // TODO handle general whitespce
-  char *s2 = s + strspn(s, " ");
-  *start = s2;
-  size_t len = strlen(s2);
-  while (len > 0 && s2[len - 1] == ' ')
-    len--;
-  return len;
+  char *p;
+  do {
+    // TODO fgets bad, getline (GNU) better?
+    p = fgets(line, sizeof(line), fpsv);
+    if (!p)
+      break;
+    lineNum++;
+    trimRight(p);               // trimRight also validates UTF-8.
+  }
+  while (!*p);
+  return p;
 }
 
 void pxObs()
 {
 }
 
-// handle a single header line
+// handle a single header line, either a # or ! line.
 xmlNodePtr addHdr(xmlNodePtr parent)
 {
-  // parse keyword
-  char *kwStart = line + 1 + strspn(line + 1, " ");
-  if (!*kwStart)
-    fatalPSV("missing header keyword");
-  char *kwEnd = strchr(kwStart, ' ');
-  size_t kwLen = kwEnd ? kwEnd - kwStart : strlen(kwStart);
+  // find keyword start.  first byte of line is known to be # or !,
+  // white space can follow, then a keyword must start.
+  char *kwStart = line + 1;
+  int all = strlen(kwStart);
+  int c, len;
+  while (1) {
+    if (!*kwStart)
+      fatalPSV("missing header keyword");
+    len = all;
+    c = xmlGetUTF8Char(kwStart, &len);
+    if (!xmlStrchr(LATIN1_WS, c))
+      break;
+    kwStart += len;
+    all -= len;
+  }
+
+  // find keyword end, copy to buffer
+  char *kwEnd = kwStart + len;
+  all -= len;
+  while (*kwEnd) {
+    c = xmlGetUTF8Char(kwEnd, &len);
+    if (xmlStrchr(LATIN1_WS, c))
+      break;
+    kwEnd += len;
+    all -= len;
+  }
+  size_t kwLen = kwEnd - kwStart;
   if (kwLen > sizeof(kw) - 1)
     fatalPSV("long keyword");
   strncpy(kw, kwStart, kwLen);
   kw[kwLen] = 0;
-  if (!xmlCheckUTF8(kw))
-    fatalPSV("invalid characters present");
-  // parse text following keyword
-  char *txt = NULL;
-  if (kwEnd) {
-    kwLen = trimSpace(kwEnd, &txt);
-    if (!kwLen)
-      txt = NULL;
-    else {
-      txt[kwLen] = 0;
-      if (!xmlCheckUTF8(txt))
-        fatalPSV("invalid characters present");
-    }
-    txt = xmlEncodeEntitiesReentrant(doc, txt);
+
+  // advance past whitespace to text following keyword
+  while (*kwEnd) {
+    c = xmlGetUTF8Char(kwEnd, &len);
+    if (!xmlStrchr(LATIN1_WS, c))
+      break;
+    kwEnd += len;
+    all -= len;
   }
-  return xmlNewChild(parent, NULL, BAD_CAST kw, BAD_CAST txt);
+
+  return xmlNewChild(parent, NULL, BAD_CAST kw, *kwEnd
+                     ? xmlEncodeEntitiesReentrant(doc, kwEnd)
+                     : NULL);
 }
 
 // pxHeader
