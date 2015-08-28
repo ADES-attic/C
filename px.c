@@ -9,9 +9,10 @@ xmlNodePtr root_node;
 char line[512];
 char kw[31];
 
-// fatal
+// fatal - print message to stdout and terminate program.
 //
-// print message to stdout and terminate program.
+// fatal always adds a newline.  typically msg should not have a trailing
+// newine.
 void fatal(char *msg)
 {
   fputs(msg, stderr);
@@ -21,14 +22,16 @@ void fatal(char *msg)
 
 void fatal1(char *msg, char *arg)
 {
-  sprintf(line, msg, arg);
-  fatal(line);
+  char *m;
+  asprintf(&m, msg, arg);
+  fatal(m);
 }
 
 void fatalPSV(char *msg)
 {
-  sprintf(line, "PSV line %d: %s", lineNum, msg);
-  fatal(line);
+  char *m;
+  asprintf(&m, "PSV line %d: %s", lineNum, msg);
+  fatal(m);
 }
 
 char *getPSVLine()
