@@ -157,6 +157,28 @@ void pxObs()
 {
   int nCols;
   char **colHdrs = splitColHdrs(&nCols);
+  xmlNodePtr obsList = xmlNewChild(root_node, NULL,
+                                   BAD_CAST "observations", NULL);
+  while (getPSVLine() && *line != '#') {
+    // assume optical until mode Radar is found
+    xmlNodePtr obs = xmlNewChild(obsList, NULL, BAD_CAST "optical", NULL);
+    char *fld = line;
+    for (int col = 0;; col++) {
+      if (col >= nCols)
+        fatalPSV("more fields than column headers");
+      char *end = (char *)xmlStrchr(fld, '|');
+      if (end)
+        *end++ = 0;
+      fld = trim(fld);
+      if (*fld)
+        xmlNewChild(obs, NULL, colHdrs[col], fld);
+      if (!strcmp(colHdrs[col], "mode") && !strcmp(fld, "Radar"))
+        xmlNodeSetName(obs, "radar");
+      if (!end)
+        break;
+      fld = end;
+    }
+  }
 }
 
 // handle a single header line, either a # or ! line.
