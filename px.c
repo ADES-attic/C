@@ -7,7 +7,8 @@
 // globals
 FILE *fpsv;
 int lineNum;
-char line[512];
+char line[512];                 // buffer for holding a single line of PSV
+char line2[512];                // for copies of line, or for formatting fatal mesages
 char kw[31];
 xmlDocPtr doc;
 xmlNodePtr root_node;
@@ -162,12 +163,33 @@ size_t trimRight(xmlChar * p)
 // p must be a null terminated string.
 char *firstNonWS(char *p)
 {
+  // note similar code in nonWSEnd
   int all = strlen(p);
   int c, len;
   while (*p) {
     len = all;
     c = xmlGetUTF8Char(p, &len);
+    // reversed test is only difference from nonWSEnd
     if (!xmlStrchr(LATIN1_WS, c))
+      break;
+    p += len;
+    all -= len;
+  }
+  return p;
+}
+
+// nonWSEnd returns a pointer to the first whitespace character or the
+// the terminating null.
+char *nonWSEnd(char *p)
+{
+  // note similar code in firstNonWS
+  int all = strlen(p);
+  int c, len;
+  while (*p) {
+    len = all;
+    c = xmlGetUTF8Char(p, &len);
+    // reversed test is only difference from firstNonWS
+    if (xmlStrchr(LATIN1_WS, c))
       break;
     p += len;
     all -= len;
@@ -245,9 +267,9 @@ void pxObs()
   xmlNodePtr obsList = xmlNewChild(root_node, NULL,
                                    BAD_CAST "observations", NULL);
   while (getPSVLine() && *line != '#') {
-    // assume optical until mode Radar is found
-    xmlNodePtr obs = xmlNewChild(obsList, NULL, BAD_CAST "optical", NULL);
+    strcpy(line2, line);        // save a copy
     char *fld = line;
+    xmlNodePtr obs;
     for (int col = 0;; col++) {
       if (col >= nCols)
         fatalPSV("more fields than column headers");
@@ -255,6 +277,25 @@ void pxObs()
       if (end)
         *end++ = 0;
       fld = trim(fld);
+
+      // special handling at first field:
+      if (col == 0) {
+        // if first field is some sort of ID,
+        if (!strcmp(fld, fldNames[0]) || // permID
+            !strcmp(fld, fldNames[1]) || // provID
+            !strcmp(fld, fldNames[2]) || // trkSub
+            !strcmp(fld, fldNames[3]) || // obsID
+            !strcmp(fld, fldNames[4])) { // trkID
+          strcpy(line, line2);  // restore line (we punched holes in it)
+          colHdrs = splitColHdrs(&nCols); // parse it as headers
+          // break column loop, continue with next PSV line
+          break;
+        }
+        // normal case: start a new observation.
+        // assume optical until mode Radar is found
+        obs = xmlNewChild(obsList, NULL, BAD_CAST "optical", NULL);
+      }
+
       if (*fld)
         xmlNewChild(obs, NULL, colHdrs[col], fld);
       if (!strcmp(colHdrs[col], "mode") && !strcmp(fld, "Radar"))
@@ -276,17 +317,7 @@ xmlNodePtr addHdr(xmlNodePtr parent)
     fatalPSV("missing header keyword");
 
   // find keyword end, copy to buffer
-  char *kwEnd = kwStart;
-  size_t all = strlen(kwEnd);
-  int len;
-  while (*kwEnd) {
-    len = all;
-    int c = xmlGetUTF8Char(kwEnd, &len);
-    if (xmlStrchr(LATIN1_WS, c))
-      break;
-    kwEnd += len;
-    all -= len;
-  }
+  char *kwEnd = nonWSEnd(kwStart);
   size_t kwLen = kwEnd - kwStart;
   if (kwLen > sizeof(kw) - 1)
     fatalPSV("long keyword");
