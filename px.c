@@ -12,6 +12,89 @@ char kw[31];
 xmlDocPtr doc;
 xmlNodePtr root_node;
 
+char *fldNames[] = {
+  "permID",
+  "provID",
+  "trkSub",
+  "obsID",
+  "trkID",
+  "mode",
+  "stn",
+  "prg",
+  "obsTime",
+  "ra",
+  "dec",
+  "deltaRA",
+  "deltaDec",
+  "raStar",
+  "decStar",
+  "frame",
+  "astCat",
+  "rmsRA",
+  "rmsDec",
+  "rmsCorr",
+  "mag",
+  "band",
+  "photCat",
+  "rmsMag",
+  "photAp",
+  "nucMag",
+  "logSNR",
+  "seeing",
+  "exp",
+  "rmsFit",
+  "nStars",
+  "ref",
+  "disc",
+  "subFmt",
+  "precTime",
+  "precRA",
+  "precDec",
+  "uncTime",
+  "notes",
+  "remarks",
+  "sys",
+  "ctr",
+  "pos1",
+  "pos2",
+  "pos3",
+  "posCov11",
+  "posCov12",
+  "posCov13",
+  "posCov22",
+  "posCov23",
+  "posCov33",
+  "valRad",
+  "rmsRad",
+  "com",
+  "frq",
+  "trx",
+  "rcv",
+  "orbProd",
+  "photProd",
+  "resRA",
+  "resDec",
+  "orbID",
+  "selAst",
+  "sigRA",
+  "sigDec",
+  "sigCorr",
+  "sigTime",
+  "biasRA",
+  "biasDec",
+  "biasTime",
+  "resMag",
+  "selPhot",
+  "sigMag",
+  "biasMag",
+  "photMod",
+  "resRad",
+  "selRad",
+  "sigRad"
+};
+
+int nFlds = sizeof fldNames / sizeof *fldNames;
+
 // fatal - print message to stdout and terminate program.
 //
 // fatal always adds a newline.
@@ -132,23 +215,25 @@ char **splitColHdrs(int *nCols)
   char *cs = strdup(line);
   colHdrs[0] = cs;
   int i = 1;
-  // cast away const
+  // (cast away const)
   for (char *p = cs; p = (char *)xmlStrchr(p, '|');) {
     *p++ = 0;
     colHdrs[i++] = p;
   }
 
-  // trim headers, catch blank headers
+  // trim headers, catch blank headers, validate against fldNames
   for (int i = 0; i < *nCols; i++) {
     char *p = trim(colHdrs[i]);
     if (!*p)
       fatalPSV("empty column header");
+    for (int j = 0; strcmp(p, fldNames[j]);)
+      if (++j == nFlds) {
+        snprintf(line, sizeof line,
+                 "unknown field used as column header: %s", p);
+        fatalPSV(line);
+      }
     colHdrs[i] = p;
   }
-
-  printf("%d headers:\n", *nCols);
-  for (int i = 0; i < *nCols; i++)
-    printf("  <%s>\n", colHdrs[i]);
   return colHdrs;
 }
 
