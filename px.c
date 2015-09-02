@@ -1,8 +1,10 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <libxml/tree.h>
+#include <libxml/xmlschemas.h>
 
 // globals
 FILE *fpsv;
@@ -378,12 +380,18 @@ void px()
 int main(int argc, char **argv)
 {
   LIBXML_TEST_VERSION;
-  if (argc != 3) {
-    fatal("usage: px <input .psv file> <output .xml file>");
+  int oc = getopt(argc, argv, "s:");
+  if (oc == '?')
+    exit(-1);                   // getopt already emitted err msg
+  char *schema = NULL;
+  if (oc > 0)
+    schema = optarg;
+  if (argc - optind != 2) {
+    fatal("usage: px [-s schema] <input .psv file> <output .xml file>");
   }
-  fpsv = fopen(argv[1], "r");
+  fpsv = fopen(argv[optind], "r");
   if (!fpsv) {
-    fatal1("can't open %s", argv[1]);
+    fatal1("can't open %s", argv[optind]);
   }
 
   doc = xmlNewDoc(BAD_CAST "1.0");
@@ -392,5 +400,20 @@ int main(int argc, char **argv)
 
   px();
 
-  xmlSaveFormatFileEnc(argv[2], doc, "UTF-8", 1);
+  if (schema) {
+    xmlSchemaParserCtxtPtr pCtx = xmlSchemaNewParserCtxt(schema);
+    if (!pCtx)
+      exit(-1);                 // xml functions emit err msgs
+    xmlSchemaPtr sPtr = xmlSchemaParse(pCtx);
+    if (!sPtr)
+      exit(-1);
+    xmlSchemaValidCtxtPtr ctxt = xmlSchemaNewValidCtxt(sPtr);
+    if (!ctxt)
+      exit(-1);
+    int r = xmlSchemaValidateDoc(ctxt, doc);
+    if (r != 0)
+      exit(-1);
+  }
+
+  xmlSaveFormatFileEnc(argv[optind + 1], doc, "UTF-8", 1);
 }
