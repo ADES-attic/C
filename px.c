@@ -14,6 +14,7 @@ char line2[512];                // for copies of line, or for formatting fatal m
 char kw[31];
 xmlDocPtr doc;
 xmlNodePtr root_node;
+xmlSchemaValidCtxtPtr schemaCtx = NULL;
 
 char *fldNames[] = {
   "permID",
@@ -268,6 +269,7 @@ void pxObs()
   char **colHdrs = splitColHdrs(&nCols);
   xmlNodePtr obsList = xmlNewChild(root_node, NULL,
                                    BAD_CAST "observations", NULL);
+  obsList->line = lineNum;
   while (getPSVLine() && *line != '#') {
     strcpy(line2, line);        // save a copy
     char *fld = line;
@@ -296,10 +298,11 @@ void pxObs()
         // normal case: start a new observation.
         // assume optical until mode Radar is found
         obs = xmlNewChild(obsList, NULL, BAD_CAST "optical", NULL);
+        obs->line = lineNum;
       }
 
       if (*fld)
-        xmlNewChild(obs, NULL, colHdrs[col], fld);
+        xmlNewChild(obs, NULL, colHdrs[col], fld)->line = lineNum;
       if (!strcmp(colHdrs[col], "mode") && !strcmp(fld, "Radar"))
         xmlNodeSetName(obs, "radar");
       if (!end)
@@ -326,9 +329,11 @@ xmlNodePtr addHdr(xmlNodePtr parent)
   strncpy(kw, kwStart, kwLen);
   kw[kwLen] = 0;
   char *txt = firstNonWS(kwEnd);
-  return xmlNewChild(parent, NULL, BAD_CAST kw, *txt
-                     ? xmlEncodeEntitiesReentrant(doc, txt)
-                     : NULL);
+  xmlNodePtr h = xmlNewChild(parent, NULL, BAD_CAST kw, *txt
+                             ? xmlEncodeEntitiesReentrant(doc, txt)
+                             : NULL);
+  h->line = lineNum;
+  return h;
 }
 
 // pxHeader
@@ -340,11 +345,13 @@ void pxHeader()
 {
   xmlNodePtr hdr = xmlNewChild(root_node, NULL,
                                BAD_CAST "observationContext", NULL);
+  hdr->line = lineNum;
   xmlNodePtr h1 = addHdr(hdr);  // top level header
   while (getPSVLine()) {
-    if (line[0] == '!')
-      addHdr(h1);
-    else if (line[0] == '#')
+    if (line[0] == '!') {
+      xmlNodePtr h2 = addHdr(h1);
+      h2->line = lineNum;
+    } else if (line[0] == '#')
       h1 = addHdr(hdr);
     else {
       pxObs();
@@ -380,10 +387,10 @@ void px()
 int main(int argc, char **argv)
 {
   LIBXML_TEST_VERSION;
+  char *schema = NULL;
   int oc = getopt(argc, argv, "s:");
   if (oc == '?')
     exit(-1);                   // getopt already emitted err msg
-  char *schema = NULL;
   if (oc > 0)
     schema = optarg;
   if (argc - optind != 2) {
@@ -394,12 +401,6 @@ int main(int argc, char **argv)
     fatal1("can't open %s", argv[optind]);
   }
 
-  doc = xmlNewDoc(BAD_CAST "1.0");
-  root_node = xmlNewNode(NULL, BAD_CAST "observationBatch");
-  xmlDocSetRootElement(doc, root_node);
-
-  px();
-
   if (schema) {
     xmlSchemaParserCtxtPtr pCtx = xmlSchemaNewParserCtxt(schema);
     if (!pCtx)
@@ -407,13 +408,19 @@ int main(int argc, char **argv)
     xmlSchemaPtr sPtr = xmlSchemaParse(pCtx);
     if (!sPtr)
       exit(-1);
-    xmlSchemaValidCtxtPtr ctxt = xmlSchemaNewValidCtxt(sPtr);
-    if (!ctxt)
-      exit(-1);
-    int r = xmlSchemaValidateDoc(ctxt, doc);
-    if (r != 0)
+    schemaCtx = xmlSchemaNewValidCtxt(sPtr);
+    if (!schemaCtx)
       exit(-1);
   }
+
+  doc = xmlNewDoc(BAD_CAST "1.0");
+  root_node = xmlNewNode(NULL, BAD_CAST "observationBatch");
+  root_node->line = 1;
+  xmlDocSetRootElement(doc, root_node);
+  px();
+
+  if (schema && xmlSchemaValidateDoc(schemaCtx, doc))
+    exit(-1);
 
   xmlSaveFormatFileEnc(argv[optind + 1], doc, "UTF-8", 1);
 }
