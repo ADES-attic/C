@@ -219,6 +219,8 @@ char *getPSVLine()
     p = fgets(line, sizeof(line), fpsv);
     if (!p)
       break;
+    if (strlen(p) == sizeof line - 1)
+      fatalPSV("line too long");
     lineNum++;
     trimRight(p);               // trimRight also validates UTF-8.
   }
