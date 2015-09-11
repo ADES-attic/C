@@ -174,7 +174,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 px_SOURCES = px.c
-px_CFLAGS = -std=gnu11 $(LIBXML2_CFLAGS)
+px_CFLAGS = -std=c99 $(LIBXML2_CFLAGS)
 px_LDFLAGS = $(LIBXML2_LIBS)
 all: all-am
 
