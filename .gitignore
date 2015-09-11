@@ -9,8 +9,6 @@ autom4te.cache/
 config.h
 config.log
 config.status
-depcomp
-install-sh
 src/.deps/
 src/Makefile
 src/px-px.o
