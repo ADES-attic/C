@@ -4,7 +4,6 @@ px
 *.xml
 *.XML
 Makefile
-Makefile.in
 aclocal.m4
 autom4te.cache/
 config.h
@@ -16,6 +15,5 @@ install-sh
 missing
 src/.deps/
 src/Makefile
-src/Makefile.in
 src/px-px.o
 stamp-h1
