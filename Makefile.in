@@ -723,6 +723,13 @@ uninstall-am: uninstall-binPROGRAMS uninstall-dist_docDATA
 	uninstall-dist_docDATA
 
 
+# indent options in .indent.pro
+indent:
+	indent src/px/*.c
+	rm src/px/*.c~
+	indent inc/*.h
+	rm inc/*.h~
+
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
