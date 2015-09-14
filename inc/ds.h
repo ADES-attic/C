@@ -97,13 +97,9 @@ typedef struct {
   dVal sigMag;
   dVal biasMag;
   dVal photMod;
-  dVal resRad;
-  dVal selRad;
-  dVal sigRad;
 
   // residual specific
   dVal resRad;
-  dVal orbID;
   dVal selRad;
   dVal sigRad;
 } radarRec;
@@ -163,13 +159,13 @@ typedef struct {
   ctxObservation observation;
   ctxObservatory observatory;
   ctxContact contact;
-  ctxNames observers;
-  ctxNames measurers;
+  ctxNameList observers;
+  ctxNameList measurers;
   ctxTelescope telescope;
   ctxSoftware software;
   dVal comment;
-  ctxNames coinvestigators;
-  ctxNames collaborators;
+  ctxNameList coinvestigators;
+  ctxNameList collaborators;
   dVal fundingSource;
   dVal orbProd;
   dVal photProd;

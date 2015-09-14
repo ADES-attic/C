@@ -12,3 +12,5 @@ config.status
 .deps/
 px-px.o
 stamp-h1
+libades.a
+libades_a-ps.o
