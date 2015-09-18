@@ -1,22 +1,17 @@
+
 typedef char *dVal;             // null terminated UTF-8
 
 typedef struct {
+  // group of names in order specified in "Default PSV"
   dVal permID;
   dVal provID;
   dVal trkSub;
-  dVal obsID;
-  dVal trkID;
   dVal mode;
   dVal stn;
   dVal prg;
   dVal obsTime;
   dVal ra;
   dVal dec;
-  dVal deltaRA;
-  dVal deltaDec;
-  dVal raStar;
-  dVal decStar;
-  dVal frame;
   dVal astCat;
   dVal rmsRA;
   dVal rmsDec;
@@ -26,10 +21,21 @@ typedef struct {
   dVal photCat;
   dVal rmsMag;
   dVal photAp;
-  dVal nucMag;
   dVal logSNR;
   dVal seeing;
   dVal exp;
+  dVal notes;
+  dVal remarks;
+
+  // remaining names in order of definition in ADES
+  dVal obsID;
+  dVal trkID;
+  dVal deltaRA;
+  dVal deltaDec;
+  dVal raStar;
+  dVal decStar;
+  dVal frame;
+  dVal nucMag;
   dVal rmsFit;
   dVal nStars;
   dVal ref;
@@ -39,8 +45,6 @@ typedef struct {
   dVal precRA;
   dVal precDec;
   dVal uncTime;
-  dVal notes;
-  dVal remarks;
   dVal sys;
   dVal ctr;
   dVal pos1;
@@ -53,34 +57,15 @@ typedef struct {
   dVal posCov23;
   dVal posCov33;
 
-  // residual specific
-  dVal resRA;
-  dVal resDec;
-  dVal orbID;
-  dVal selAst;
-  dVal sigRA;
-  dVal sigDec;
-  dVal sigCorr;
-  dVal sigTime;
-  dVal biasRA;
-  dVal biasDec;
-  dVal biasTime;
-  dVal resMag;
-  dVal selPhot;
-  dVal sigMag;
-  dVal biasMag;
-  dVal photMod;
-} opticalRec;
-
-typedef struct {
+  // radar specific
   dVal valRad;
   dVal rmsRad;
   dVal com;
   dVal frq;
   dVal trx;
   dVal rcv;
-  dVal orbProd;
-  dVal photProd;
+
+  // residual specific
   dVal resRA;
   dVal resDec;
   dVal orbID;
@@ -98,16 +83,10 @@ typedef struct {
   dVal biasMag;
   dVal photMod;
 
-  // residual specific
+  // radar residual specific
   dVal resRad;
   dVal selRad;
   dVal sigRad;
-} radarRec;
-
-// one member must have valid data, the other must be NULL;
-typedef struct {
-  opticalRec *o;
-  radarRec *r;
 } obsRec;
 
 // a list of observations
@@ -156,28 +135,28 @@ typedef struct {
 } ctxSoftware;
 
 typedef struct {
-  ctxObservation observation;
-  ctxObservatory observatory;
-  ctxContact contact;
-  ctxNameList observers;
-  ctxNameList measurers;
-  ctxTelescope telescope;
-  ctxSoftware software;
+  ctxObservation *observation;
+  ctxObservatory *observatory;
+  ctxContact *contact;
+  ctxNameList *observers;
+  ctxNameList *measurers;
+  ctxTelescope *telescope;
+  ctxSoftware *software;
   dVal comment;
-  ctxNameList coinvestigators;
-  ctxNameList collaborators;
+  ctxNameList *coinvestigators;
+  ctxNameList *collaborators;
   dVal fundingSource;
   dVal orbProd;
   dVal photProd;
 } observationContext;
 
 typedef struct {
-  observationContext ctx;
-  obsList obs;
-} mpcDataSet;
+  observationContext *ctx;
+  obsList *obs;
+} observationSegment;
 
-// a list of mpcDataSets
+// root element: a list of observationSegments
 typedef struct {
   int len;
-  mpcDataSet *sets;
-} mpcSubmission;
+  observationSegment *segments;
+} observationBatch;

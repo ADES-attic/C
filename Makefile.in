@@ -101,7 +101,8 @@ AR = ar
 ARFLAGS = cru
 libades_a_AR = $(AR) $(ARFLAGS)
 libades_a_LIBADD =
-am_libades_a_OBJECTS = libades_a-ps.$(OBJEXT)
+am_libades_a_OBJECTS = libades_a-ps.$(OBJEXT) \
+	libades_a-tables.$(OBJEXT)
 libades_a_OBJECTS = $(am_libades_a_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS)
 am_px_OBJECTS = px-px.$(OBJEXT)
@@ -233,7 +234,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 dist_doc_DATA = readme.md
 lib_LIBRARIES = libades.a
-libades_a_SOURCES = src/ades/ps.c
+libades_a_SOURCES = src/ades/ps.c src/ades/tables.c
 libades_a_CFLAGS = -std=c99 -Iinc
 px_SOURCES = src/px/px.c
 px_CFLAGS = -std=c99 $(LIBXML2_CFLAGS)
@@ -378,6 +379,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-ps.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-tables.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/px-px.Po@am__quote@
 
 .c.o:
@@ -407,6 +409,20 @@ libades_a-ps.obj: src/ades/ps.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/ades/ps.c' object='libades_a-ps.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -c -o libades_a-ps.obj `if test -f 'src/ades/ps.c'; then $(CYGPATH_W) 'src/ades/ps.c'; else $(CYGPATH_W) '$(srcdir)/src/ades/ps.c'; fi`
+
+libades_a-tables.o: src/ades/tables.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -MT libades_a-tables.o -MD -MP -MF $(DEPDIR)/libades_a-tables.Tpo -c -o libades_a-tables.o `test -f 'src/ades/tables.c' || echo '$(srcdir)/'`src/ades/tables.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libades_a-tables.Tpo $(DEPDIR)/libades_a-tables.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/ades/tables.c' object='libades_a-tables.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -c -o libades_a-tables.o `test -f 'src/ades/tables.c' || echo '$(srcdir)/'`src/ades/tables.c
+
+libades_a-tables.obj: src/ades/tables.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -MT libades_a-tables.obj -MD -MP -MF $(DEPDIR)/libades_a-tables.Tpo -c -o libades_a-tables.obj `if test -f 'src/ades/tables.c'; then $(CYGPATH_W) 'src/ades/tables.c'; else $(CYGPATH_W) '$(srcdir)/src/ades/tables.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libades_a-tables.Tpo $(DEPDIR)/libades_a-tables.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/ades/tables.c' object='libades_a-tables.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -c -o libades_a-tables.obj `if test -f 'src/ades/tables.c'; then $(CYGPATH_W) 'src/ades/tables.c'; else $(CYGPATH_W) '$(srcdir)/src/ades/tables.c'; fi`
 
 px-px.o: src/px/px.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(px_CFLAGS) $(CFLAGS) -MT px-px.o -MD -MP -MF $(DEPDIR)/px-px.Tpo -c -o px-px.o `test -f 'src/px/px.c' || echo '$(srcdir)/'`src/px/px.c
@@ -791,10 +807,12 @@ uninstall-am: uninstall-binPROGRAMS uninstall-dist_docDATA \
 
 # indent options in .indent.pro
 indent:
-	indent src/px/*.c
-	rm src/px/*.c~
 	indent inc/*.h
 	rm inc/*.h~
+	indent src/ades/*.c
+	rm src/ades/*.c~
+	indent src/px/*.c
+	rm src/px/*.c~
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

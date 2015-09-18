@@ -1,4 +1,5 @@
 px
+libades.a
 *.psv
 *.PSV
 *.xml
@@ -10,7 +11,5 @@ config.h
 config.log
 config.status
 .deps/
-px-px.o
+*.o
 stamp-h1
-libades.a
-libades_a-ps.o
