@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <unistr.h>
 
+#include <alerr.h>
 #include <ds.h>
 
 extern char *fldNames[];
@@ -20,28 +21,16 @@ int lineNum;
 char line[512];                 // buffer for holding a single line of PSV
 char line2[512];                // for copies of line, or for formatting error mesages
 
-int error(char *msg)
-{
-  strcpy(line2, msg);
-  return -1;
-}
-
-int error1(char *msg, char *arg)
-{
-  snprintf(line2, sizeof line2, msg, arg);
-  return -1;
-}
-
 int errorPSV(char *msg)
 {
-  snprintf(line2, sizeof line2, "PSV line %d: %s", lineNum, msg);
+  snprintf(errLine, sizeof errLine, "PSV line %d: %s", lineNum, msg);
   return -1;
 }
 
 int errorPSV1(char *msg, char *arg)
 {
-  snprintf(line, sizeof line, msg, arg);
-  snprintf(line2, sizeof line2, "PSV line %d: %s", lineNum, line);
+  int n = snprintf(errLine, sizeof errLine, "PSV line %d: ", lineNum);
+  snprintf(errLine + n, sizeof errLine - n, msg, arg);
   return -1;
 }
 

@@ -385,7 +385,7 @@ void px()
 
 // main
 //
-// usage: px <input .psv file> <output .xml file>
+// usage: pxdirect [-s schema] <input .psv file> <output .xml file>
 int main(int argc, char **argv)
 {
   LIBXML_TEST_VERSION;
@@ -396,7 +396,7 @@ int main(int argc, char **argv)
   if (oc > 0)
     schema = optarg;
   if (argc - optind != 2) {
-    fatal("usage: px [-s schema] <input .psv file> <output .xml file>");
+    fatal("usage: pxdirect [-s schema] <input .psv file> <output .xml file>");
   }
   fpsv = fopen(argv[optind], "r");
   if (!fpsv) {
