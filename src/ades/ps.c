@@ -446,7 +446,8 @@ int setCtxContact(observationContext * o, char *txt)
   return 0;
 }
 
-int parseNameList(ctxNameList **pnl, char *txt, char *h1) {
+int parseNameList(ctxNameList ** pnl, char *txt, char *h1)
+{
   if (*txt)
     return errorPSV1("text not allowed on %s line", h1);
   ctxNameList *nl = calloc(1, sizeof(ctxNameList));
@@ -461,11 +462,11 @@ int parseNameList(ctxNameList **pnl, char *txt, char *h1) {
     if (r != 0)
       return r;
     if (kwd != "mpcCode") {
-        return errorPSV1("unknown element for %1 list", h1);
+      return errorPSV1("unknown element for %1 list", h1);
     }
     int last = nl->len;
     nl->len++;
-    nl->names = realloc(nl->names, nl->len*sizeof(dVal));
+    nl->names = realloc(nl->names, nl->len * sizeof(dVal));
     nl->names[last] = strdup(txt);
   }
   *pnl = nl;

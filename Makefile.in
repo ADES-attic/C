@@ -101,7 +101,7 @@ AR = ar
 ARFLAGS = cru
 libades_a_AR = $(AR) $(ARFLAGS)
 libades_a_LIBADD =
-am_libades_a_OBJECTS = libades_a-ps.$(OBJEXT) \
+am_libades_a_OBJECTS = libades_a-ps.$(OBJEXT) libades_a-sx.$(OBJEXT) \
 	libades_a-tables.$(OBJEXT)
 libades_a_OBJECTS = $(am_libades_a_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS)
@@ -234,7 +234,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 dist_doc_DATA = readme.md
 lib_LIBRARIES = libades.a
-libades_a_SOURCES = src/ades/ps.c src/ades/tables.c
+libades_a_SOURCES = src/ades/ps.c src/ades/sx.c src/ades/tables.c
 libades_a_CFLAGS = -std=c99 -Iinc
 px_SOURCES = src/px/px.c
 px_CFLAGS = -std=c99 $(LIBXML2_CFLAGS)
@@ -379,6 +379,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-ps.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-sx.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-tables.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/px-px.Po@am__quote@
 
@@ -409,6 +410,20 @@ libades_a-ps.obj: src/ades/ps.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/ades/ps.c' object='libades_a-ps.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -c -o libades_a-ps.obj `if test -f 'src/ades/ps.c'; then $(CYGPATH_W) 'src/ades/ps.c'; else $(CYGPATH_W) '$(srcdir)/src/ades/ps.c'; fi`
+
+libades_a-sx.o: src/ades/sx.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -MT libades_a-sx.o -MD -MP -MF $(DEPDIR)/libades_a-sx.Tpo -c -o libades_a-sx.o `test -f 'src/ades/sx.c' || echo '$(srcdir)/'`src/ades/sx.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libades_a-sx.Tpo $(DEPDIR)/libades_a-sx.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/ades/sx.c' object='libades_a-sx.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -c -o libades_a-sx.o `test -f 'src/ades/sx.c' || echo '$(srcdir)/'`src/ades/sx.c
+
+libades_a-sx.obj: src/ades/sx.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -MT libades_a-sx.obj -MD -MP -MF $(DEPDIR)/libades_a-sx.Tpo -c -o libades_a-sx.obj `if test -f 'src/ades/sx.c'; then $(CYGPATH_W) 'src/ades/sx.c'; else $(CYGPATH_W) '$(srcdir)/src/ades/sx.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libades_a-sx.Tpo $(DEPDIR)/libades_a-sx.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/ades/sx.c' object='libades_a-sx.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -c -o libades_a-sx.obj `if test -f 'src/ades/sx.c'; then $(CYGPATH_W) 'src/ades/sx.c'; else $(CYGPATH_W) '$(srcdir)/src/ades/sx.c'; fi`
 
 libades_a-tables.o: src/ades/tables.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -MT libades_a-tables.o -MD -MP -MF $(DEPDIR)/libades_a-tables.Tpo -c -o libades_a-tables.o `test -f 'src/ades/tables.c' || echo '$(srcdir)/'`src/ades/tables.c

@@ -1,7 +1,7 @@
 dist_doc_DATA = readme.md
 
 lib_LIBRARIES = libades.a
-libades_a_SOURCES = src/ades/ps.c src/ades/tables.c
+libades_a_SOURCES = src/ades/ps.c src/ades/sx.c src/ades/tables.c
 libades_a_CFLAGS = -std=c99 -Iinc
 
 bin_PROGRAMS = px
