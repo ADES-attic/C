@@ -2,12 +2,12 @@ dist_doc_DATA = readme.md
 
 lib_LIBRARIES = libades.a
 libades_a_SOURCES = src/ades/ps.c src/ades/sx.c src/ades/tables.c
-libades_a_CFLAGS = -std=c99 -Iinc
+libades_a_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
 
-bin_PROGRAMS = px
-px_SOURCES = src/px/px.c
-px_CFLAGS = -std=c99 $(LIBXML2_CFLAGS)
-px_LDFLAGS = $(LIBXML2_LIBS)
+bin_PROGRAMS = pxdirect
+pxdirect_SOURCES = src/pxdirect/pxdirect.c
+pxdirect_CFLAGS = -std=c99 $(LIBXML2_CFLAGS)
+pxdirect_LDFLAGS = $(LIBXML2_LIBS)
 
 # indent options in .indent.pro
 indent:
@@ -15,5 +15,5 @@ indent:
 	rm inc/*.h~
 	indent src/ades/*.c
 	rm src/ades/*.c~
-	indent src/px/*.c
-	rm src/px/*.c~
+	indent src/pxdirect/*.c
+	rm src/pxdirect/*.c~
