@@ -124,6 +124,7 @@ typedef struct {
   dVal detector;
   dVal fRatio;
   dVal filter;
+  dVal arraySize;
   dVal pixelScale;
 } ctxTelescope;
 
