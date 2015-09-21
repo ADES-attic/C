@@ -38,6 +38,13 @@ int errorPSV(char *msg)
   return -1;
 }
 
+int errorPSV1(char *msg, char *arg)
+{
+  snprintf(line, sizeof line, msg, arg);
+  snprintf(line2, sizeof line2, "PSV line %d: %s", lineNum, line);
+  return -1;
+}
+
 // TODO figure out the rest of Unicode whitespace. (white space property?
 // category Z? related functions in libunistring?)
 #define LATIN1_WS "\t\n\v\f\r \x85\xA0"
@@ -357,9 +364,299 @@ int setCtxObservation(observationContext * o, char *txt)
   return 0;
 }
 
+int setCtxObservatory(observationContext * o, char *txt)
+{
+  if (*txt)
+    return errorPSV("text not allowed on observatory line");
+
+  ctxObservatory *obs = calloc(1, sizeof(ctxObservatory));
+  o->observatory = obs;
+  _Bool haveCode = 0;
+  _Bool haveName = 0;
+  char *kwd;
+  while (1) {
+    int r = getPSVLine();
+    if (r != 0)
+      return r;
+    if (*line != '!')
+      return 0;
+    r = parseHdr(&kwd, &txt);
+    if (r != 0)
+      return r;
+    if (kwd == "mpcCode") {
+      if (haveCode)
+        return errorPSV("multiple mpcCode lines");
+      obs->mpcCode = strdup(txt);
+      haveCode = 1;
+    } else if (kwd == "name") {
+      if (haveName)
+        return errorPSV("multiple name lines");
+      obs->name = strdup(txt);
+      haveName = 1;
+    } else
+      return errorPSV("unknown element for observatory group");
+  }
+  return 0;
+}
+
+int setCtxContact(observationContext * o, char *txt)
+{
+  if (*txt)
+    return errorPSV("text not allowed on contact line");
+
+  ctxContact *con = calloc(1, sizeof(ctxContact));
+  o->contact = con;
+  _Bool haveName = 0;
+  _Bool haveAddress = 0;
+  _Bool haveAckMsg = 0;
+  _Bool haveAckEmail = 0;
+  char *kwd;
+  while (1) {
+    int r = getPSVLine();
+    if (r != 0)
+      return r;
+    if (*line != '!')
+      return 0;
+    r = parseHdr(&kwd, &txt);
+    if (r != 0)
+      return r;
+    if (kwd == "name") {
+      if (haveName)
+        return errorPSV("multiple name lines");
+      con->name = strdup(txt);
+      haveName = 1;
+    } else if (kwd == "address") {
+      if (haveAddress)
+        return errorPSV("multiple address lines");
+      con->address = strdup(txt);
+      haveAddress = 1;
+    } else if (kwd == "ackMessage") {
+      if (haveAckMsg)
+        return errorPSV("multiple ackMessage lines");
+      con->ackMessage = strdup(txt);
+      haveAckMsg = 1;
+    } else if (kwd == "ackEmail") {
+      if (haveAckEmail)
+        return errorPSV("multiple ackEmail lines");
+      con->ackEmail = strdup(txt);
+      haveAckEmail = 1;
+    } else
+      return errorPSV("unknown element for observatory group");
+  }
+  return 0;
+}
+
+int parseNameList(ctxNameList **pnl, char *txt, char *h1) {
+  if (*txt)
+    return errorPSV1("text not allowed on %s line", h1);
+  ctxNameList *nl = calloc(1, sizeof(ctxNameList));
+  char *kwd;
+  while (1) {
+    int r = getPSVLine();
+    if (r != 0)
+      return r;
+    if (*line != '!')
+      return 0;
+    r = parseHdr(&kwd, &txt);
+    if (r != 0)
+      return r;
+    if (kwd != "mpcCode") {
+        return errorPSV1("unknown element for %1 list", h1);
+    }
+    int last = nl->len;
+    nl->len++;
+    nl->names = realloc(nl->names, nl->len*sizeof(dVal));
+    nl->names[last] = strdup(txt);
+  }
+  *pnl = nl;
+  return 0;
+}
+
+int setCtxObservers(observationContext * o, char *txt)
+{
+  ctxNameList *nl;
+  int r = parseNameList(&nl, txt, "observers");
+  if (r != 0)
+    return r;
+  o->observers = nl;
+  return 0;
+}
+
+int setCtxMeasurers(observationContext * o, char *txt)
+{
+  ctxNameList *nl;
+  int r = parseNameList(&nl, txt, "measurers");
+  if (r != 0)
+    return r;
+  o->measurers = nl;
+  return 0;
+}
+
+int setCtxTelescope(observationContext * o, char *txt)
+{
+  if (*txt)
+    return errorPSV("text not allowed on telescope line");
+
+  ctxTelescope *tel = calloc(1, sizeof(ctxTelescope));
+  o->telescope = tel;
+  _Bool haveName = 0;
+  _Bool haveDes = 0;
+  _Bool haveAp = 0;
+  _Bool haveDet = 0;
+  _Bool haveF = 0;
+  _Bool haveFilter = 0;
+  _Bool haveArray = 0;
+  _Bool havePix = 0;
+  char *kwd;
+  while (1) {
+    int r = getPSVLine();
+    if (r != 0)
+      return r;
+    if (*line != '!')
+      return 0;
+    r = parseHdr(&kwd, &txt);
+    if (r != 0)
+      return r;
+    if (kwd == "name") {
+      if (haveName)
+        return errorPSV("multiple name lines");
+      tel->name = strdup(txt);
+      haveName = 1;
+    } else if (kwd == "design") {
+      if (haveDes)
+        return errorPSV("multiple design lines");
+      tel->design = strdup(txt);
+      haveDes = 1;
+    } else if (kwd == "aperture") {
+      if (haveAp)
+        return errorPSV("multiple aperture lines");
+      tel->aperture = strdup(txt);
+      haveAp = 1;
+    } else if (kwd == "detector") {
+      if (haveDet)
+        return errorPSV("multiple detector lines");
+      tel->detector = strdup(txt);
+      haveDet = 1;
+    } else if (kwd == "fRatio") {
+      if (haveF)
+        return errorPSV("multiple fRatio lines");
+      tel->fRatio = strdup(txt);
+      haveF = 1;
+    } else if (kwd == "filter") {
+      if (haveFilter)
+        return errorPSV("multiple filter lines");
+      tel->filter = strdup(txt);
+      haveFilter = 1;
+    } else if (kwd == "arraySize") {
+      if (haveArray)
+        return errorPSV("multiple arraySize lines");
+      tel->arraySize = strdup(txt);
+      haveArray = 1;
+    } else if (kwd == "pixelScale") {
+      if (havePix)
+        return errorPSV("multiple pixelScale lines");
+      tel->pixelScale = strdup(txt);
+      havePix = 1;
+    } else
+      return errorPSV("unknown element for observatory group");
+  }
+  return 0;
+}
+
+int setCtxSoftware(observationContext * o, char *txt)
+{
+  if (*txt)
+    return errorPSV("text not allowed on software line");
+
+  ctxSoftware *sw = calloc(1, sizeof(ctxSoftware));
+  o->software = sw;
+  _Bool haveAst = 0;
+  _Bool haveFit = 0;
+  _Bool havePhot = 0;
+  _Bool haveDet = 0;
+  char *kwd;
+  while (1) {
+    int r = getPSVLine();
+    if (r != 0)
+      return r;
+    if (*line != '!')
+      return 0;
+    r = parseHdr(&kwd, &txt);
+    if (r != 0)
+      return r;
+    if (kwd == "astrometry") {
+      if (haveAst)
+        return errorPSV("multiple astrometry lines");
+      sw->astrometry = strdup(txt);
+      haveAst = 1;
+    } else if (kwd == "fitOrder") {
+      if (haveFit)
+        return errorPSV("multiple fitOrder lines");
+      sw->fitOrder = strdup(txt);
+      haveFit = 1;
+    } else if (kwd == "photometry") {
+      if (havePhot)
+        return errorPSV("multiple photometry lines");
+      sw->photometry = strdup(txt);
+      havePhot = 1;
+    } else if (kwd == "objectDetection") {
+      if (haveDet)
+        return errorPSV("multiple objectDetection lines");
+      sw->objectDetection = strdup(txt);
+      haveDet = 1;
+    } else
+      return errorPSV("unknown element for software group");
+  }
+  return 0;
+}
+
+int setCtxComment(observationContext * o, char *txt)
+{
+  if (*txt)
+    o->comment = strdup(txt);
+  return 0;
+}
+
+int setCtxCoinvestigators(observationContext * o, char *txt)
+{
+  ctxNameList *nl;
+  int r = parseNameList(&nl, txt, "coinvestigators");
+  if (r != 0)
+    return r;
+  o->coinvestigators = nl;
+  return 0;
+}
+
+int setCtxCollaborators(observationContext * o, char *txt)
+{
+  ctxNameList *nl;
+  int r = parseNameList(&nl, txt, "collaborators");
+  if (r != 0)
+    return r;
+  o->collaborators = nl;
+  return 0;
+}
+
+int setCtxFundingSource(observationContext * o, char *txt)
+{
+  if (*txt)
+    o->fundingSource = strdup(txt);
+  return 0;
+}
+
 typedef int (*ctxSetter) (observationContext *, char *);
 ctxSetter setCtx[] = {
-  setCtxObservation
+  setCtxObservation,
+  setCtxObservatory,
+  setCtxContact,
+  setCtxObservers,
+  setCtxMeasurers,
+  setCtxTelescope,
+  setCtxSoftware,
+  setCtxComment,
+  setCtxCoinvestigators,
+  setCtxCollaborators,
+  setCtxFundingSource
 };
 
 // pxHeader
