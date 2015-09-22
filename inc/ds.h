@@ -1,3 +1,5 @@
+#ifndef DS_H
+#define DS_H
 
 typedef char *dVal;             // null terminated UTF-8
 
@@ -161,3 +163,5 @@ typedef struct {
   int len;
   observationSegment *segments;
 } observationBatch;
+
+#endif
