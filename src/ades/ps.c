@@ -183,7 +183,6 @@ int getPSVLine()
 // return 0 for success, non-zero on error.
 int splitColHdrs(int *nCols, int **pCols)
 {
-  printf("splitColHdrs line: %s\n", line);
   // count pipes, set nCols, allocate array for text of headers
   int nPipes = 0;
   char *p2 = strchr(line, 0);
@@ -243,12 +242,12 @@ int pxObs(obsList * ol)
   obsRec *obs = calloc(cap, sizeof(obsRec));
   int r;
   while (1) {
-    nextLine: r = getPSVLine();
+ nextLine:
+    r = getPSVLine();
     if (r != 0)
       return r;
     if (!*line || *line == '#')
       break;
-    printf("data line: %s\n", line);
     strcpy(line2, line);        // save a copy
 
     char *e = strchr(line, 0);
@@ -265,29 +264,22 @@ int pxObs(obsList * ol)
 
       // special handling at first field:
       if (col == 0) {
-        printf("col 0 of data, fld data is %s, len, cap = %d, %d\n", fld, len, cap);
         // if first field is permID,
         if (!strcmp(fld, fldNames[0])) { // permID
-          printf("it's permID, rescan col hdrs\n");
           strcpy(line, line2);  // restore line (we punched holes in it)
           // and reparse as headers
           rc = splitColHdrs(&nCols, &fldNums);
           if (rc != 0) {
             return rc;
           }
-          printf("rescan okay\n");
           // break column loop, continue with next PSV line
           goto nextLine;
         }
         // normal case: grow list as needed
-        printf("again? len, cap = %d, %d, == says %d\n", len, cap, len==cap);
         if (len == cap) {
-          printf("realloc now. %d not enough\n", len);
           cap *= 2;
           obs = realloc(obs, cap * sizeof(obsRec));
-          printf("did it work? obs = %x\n", obs);
-          memset(obs+len, 0, len*sizeof(obsRec));
-          printf("memset okay\n");
+          memset(obs + len, 0, len * sizeof(obsRec));
         }
       }
 
@@ -304,7 +296,6 @@ int pxObs(obsList * ol)
     obs = realloc(obs, len * sizeof(obsRec));
   ol->len = len;
   ol->observations = obs;
-  printf("pxObs okay %d obs\n", ol->len);
   return 0;
 }
 
@@ -454,7 +445,6 @@ int setCtxContact(observationContext * o, char *txt)
 
 int parseNameList(ctxNameList ** pnl, char *txt, char *h1)
 {
-  printf("parseNameList for %s\n", h1);
   if (*txt)
     return errorPSV1("text not allowed on %s line", h1);
   ctxNameList *nl = calloc(1, sizeof(ctxNameList));
@@ -475,7 +465,6 @@ int parseNameList(ctxNameList ** pnl, char *txt, char *h1)
     nl->len++;
     nl->names = realloc(nl->names, nl->len * sizeof(dVal));
     nl->names[last] = strdup(txt);
-    printf("stored %s index %d new len %d\n", nl->names[last], last, nl->len);
   }
   *pnl = nl;
   return 0;
@@ -483,12 +472,10 @@ int parseNameList(ctxNameList ** pnl, char *txt, char *h1)
 
 int setCtxObservers(observationContext * o, char *txt)
 {
-  printf("setCtxObservers\n");
   ctxNameList *nl = NULL;
   int r = parseNameList(&nl, txt, "observers");
   if (r)
     return r;
-  printf("nl set: %x\n", nl);
   o->observers = nl;
   return 0;
 }
@@ -505,7 +492,6 @@ int setCtxMeasurers(observationContext * o, char *txt)
 
 int setCtxTelescope(observationContext * o, char *txt)
 {
-  printf("parsin the telescope\n");
   if (*txt)
     return errorPSV("text not allowed on telescope line");
 
@@ -529,7 +515,6 @@ int setCtxTelescope(observationContext * o, char *txt)
     r = parseHdr(&kwd, &txt);
     if (r != 0)
       return r;
-    printf("got kwd %s\n", kwd);
     if (!strcmp(kwd, "name")) {
       if (haveName)
         return errorPSV("multiple name lines");
@@ -702,12 +687,10 @@ int pxHeader(observationContext * ctx)
     if (r != 0)
       return r;
     int kx;
-    printf("looking for %s in (%d) H1Names\n", kwd, nH1Names);
     for (kx = 0; strcmp(kwd, H1Names[kx]);) {
       if (++kx == nH1Names)
         return errorPSV("unknown header keyword");
     }
-    printf("H1 name is %s\n", kwd);
     r = setCtx[kx] (ctx, txt);
     if (r != 0)
       return r;
@@ -728,7 +711,7 @@ int readPSVFile(char *fn, observationBatch ** o)
     return r;
   if (!*line)
     return error1("file %s empty", fn);
-  
+
   observationBatch *b = calloc(1, sizeof(observationBatch));
   *o = b;
   int len = 0;

@@ -12,7 +12,6 @@ xmlNodePtr root_node;
 
 int addCtxObservation(ctxObservation * obs, xmlNodePtr xCtx)
 {
-  printf("addCtxObservation\n");
   xmlNodePtr xObs = xmlNewChild(xCtx, NULL, "observation", NULL);
   if (obs->count)
     xmlNewChild(xObs, NULL, "count", obs->count);
@@ -47,14 +46,9 @@ int addCtxContact(ctxContact * con, xmlNodePtr xCtx)
 
 int addCtxObservers(ctxNameList * nl, xmlNodePtr xCtx)
 {
-  printf("addCtxObservers\n");
-  printf("nl %x\n", nl);
-  printf("nl->len %d\n", nl->len);
   xmlNodePtr xObs = xmlNewChild(xCtx, NULL, "observers", NULL);
-  for (int i = 0; i < nl->len; i++) {
-    printf("name %d %s\n", i, nl->names[i]);
+  for (int i = 0; i < nl->len; i++)
     xmlNewChild(xObs, NULL, "name", nl->names[i]);
-  }
   return 0;
 }
 
@@ -144,9 +138,7 @@ int addCtxPhotProd(dVal phot, xmlNodePtr xCtx)
 
 int addCtx(observationContext * ctx)
 {
-  printf("addCtx\n");
-  xmlNodePtr xCtx = xmlNewChild(root_node, NULL,
-                                BAD_CAST "observationContext", NULL);
+  xmlNodePtr xCtx = xmlNewChild(root_node, NULL, "observationContext", NULL);
   int r;
   if (ctx->observation) {
     r = addCtxObservation(ctx->observation, xCtx);
@@ -217,15 +209,11 @@ int addCtx(observationContext * ctx)
 
 int addObsList(obsList * ol)
 {
-  printf("addObsList len %d\n", ol->len);
   xmlNodePtr xObs = xmlNewChild(root_node, NULL, "observations", NULL);
   int r;
   xmlNodePtr xRec;
   for (int i = 0; i < ol->len; i++) {
     obsRec *rec = ol->observations + i;
-    printf("rec # %d: %x\n", i, rec);
-    printf("rec->permID %x\n", rec->permID);
-    printf("rec->mode %x\n", rec->mode);
 
     if (rec->mode && !strcmp(rec->mode, "Radar"))
       xRec = xmlNewChild(xObs, NULL, "radar", NULL);
@@ -278,35 +266,131 @@ int addObsList(obsList * ol)
       xmlNewChild(xRec, NULL, "notes", rec->notes);
     if (rec->remarks)
       xmlNewChild(xRec, NULL, "remarks", rec->remarks);
+    if (rec->obsID)
+      xmlNewChild(xRec, NULL, "obsID", rec->obsID);
+    if (rec->trkID)
+      xmlNewChild(xRec, NULL, "trkID", rec->trkID);
+    if (rec->deltaRA)
+      xmlNewChild(xRec, NULL, "deltaRA", rec->deltaRA);
+    if (rec->deltaDec)
+      xmlNewChild(xRec, NULL, "deltaDec", rec->deltaDec);
+    if (rec->raStar)
+      xmlNewChild(xRec, NULL, "raStar", rec->raStar);
+    if (rec->frame)
+      xmlNewChild(xRec, NULL, "frame", rec->frame);
+    if (rec->nucMag)
+      xmlNewChild(xRec, NULL, "nucMag", rec->nucMag);
+    if (rec->rmsFit)
+      xmlNewChild(xRec, NULL, "rmsFit", rec->rmsFit);
+    if (rec->nStars)
+      xmlNewChild(xRec, NULL, "nStars", rec->nStars);
+    if (rec->ref)
+      xmlNewChild(xRec, NULL, "ref", rec->ref);
+    if (rec->disc)
+      xmlNewChild(xRec, NULL, "disc", rec->disc);
+    if (rec->subFmt)
+      xmlNewChild(xRec, NULL, "subFmt", rec->subFmt);
+    if (rec->precTime)
+      xmlNewChild(xRec, NULL, "precTime", rec->precTime);
+    if (rec->precRA)
+      xmlNewChild(xRec, NULL, "precRA", rec->precRA);
+    if (rec->precDec)
+      xmlNewChild(xRec, NULL, "precDec", rec->precDec);
+    if (rec->uncTime)
+      xmlNewChild(xRec, NULL, "uncTime", rec->uncTime);
+    if (rec->sys)
+      xmlNewChild(xRec, NULL, "sys", rec->sys);
+    if (rec->ctr)
+      xmlNewChild(xRec, NULL, "ctr", rec->ctr);
+    if (rec->pos1)
+      xmlNewChild(xRec, NULL, "pos1", rec->pos1);
+    if (rec->pos2)
+      xmlNewChild(xRec, NULL, "pos2", rec->pos2);
+    if (rec->pos3)
+      xmlNewChild(xRec, NULL, "pos3", rec->pos3);
+    if (rec->posCov11)
+      xmlNewChild(xRec, NULL, "posCov11", rec->posCov11);
+    if (rec->posCov12)
+      xmlNewChild(xRec, NULL, "posCov12", rec->posCov12);
+    if (rec->posCov13)
+      xmlNewChild(xRec, NULL, "posCov13", rec->posCov13);
+    if (rec->posCov22)
+      xmlNewChild(xRec, NULL, "posCov22", rec->posCov22);
+    if (rec->posCov23)
+      xmlNewChild(xRec, NULL, "posCov23", rec->posCov23);
+    if (rec->posCov33)
+      xmlNewChild(xRec, NULL, "posCov33", rec->posCov33);
+    if (rec->valRad)
+      xmlNewChild(xRec, NULL, "valRad", rec->valRad);
+    if (rec->rmsRad)
+      xmlNewChild(xRec, NULL, "rmsRad", rec->rmsRad);
+    if (rec->com)
+      xmlNewChild(xRec, NULL, "com", rec->com);
+    if (rec->frq)
+      xmlNewChild(xRec, NULL, "frq", rec->frq);
+    if (rec->trx)
+      xmlNewChild(xRec, NULL, "trx", rec->trx);
+    if (rec->rcv)
+      xmlNewChild(xRec, NULL, "rcv", rec->rcv);
+    if (rec->resRA)
+      xmlNewChild(xRec, NULL, "resRA", rec->resRA);
+    if (rec->resDec)
+      xmlNewChild(xRec, NULL, "resDec", rec->resDec);
+    if (rec->orbID)
+      xmlNewChild(xRec, NULL, "orbID", rec->orbID);
+    if (rec->selAst)
+      xmlNewChild(xRec, NULL, "selAst", rec->selAst);
+    if (rec->sigRA)
+      xmlNewChild(xRec, NULL, "sigRA", rec->sigRA);
+    if (rec->sigDec)
+      xmlNewChild(xRec, NULL, "sigDec", rec->sigDec);
+    if (rec->sigCorr)
+      xmlNewChild(xRec, NULL, "sigCorr", rec->sigCorr);
+    if (rec->sigTime)
+      xmlNewChild(xRec, NULL, "sigTime", rec->sigTime);
+    if (rec->biasRA)
+      xmlNewChild(xRec, NULL, "biasRA", rec->biasRA);
+    if (rec->biasDec)
+      xmlNewChild(xRec, NULL, "biasDec", rec->biasDec);
+    if (rec->biasTime)
+      xmlNewChild(xRec, NULL, "biasTime", rec->biasTime);
+    if (rec->resMag)
+      xmlNewChild(xRec, NULL, "resMag", rec->resMag);
+    if (rec->selPhot)
+      xmlNewChild(xRec, NULL, "selPhot", rec->selPhot);
+    if (rec->sigMag)
+      xmlNewChild(xRec, NULL, "sigMag", rec->sigMag);
+    if (rec->biasMag)
+      xmlNewChild(xRec, NULL, "biasMag", rec->biasMag);
+    if (rec->photMod)
+      xmlNewChild(xRec, NULL, "photMod", rec->photMod);
+    if (rec->resRad)
+      xmlNewChild(xRec, NULL, "resRad", rec->resRad);
+    if (rec->selRad)
+      xmlNewChild(xRec, NULL, "selRad", rec->selRad);
+    if (rec->sigRad)
+      xmlNewChild(xRec, NULL, "sigRad", rec->sigRad);
   }
   return 0;
 }
 
 int addSeg(observationSegment * os)
 {
-  printf("addSeg\n");
   if (os->ctx)
     return addCtx(os->ctx);
+
   return addObsList(os->obs);
 }
 
 int writeXMLFile(observationBatch * o, char *fn)
 {
-  printf("writeXMLFile\n");
   if (!o)
     return error("no data");
 
-  printf("got data\n");
-
-  doc = xmlNewDoc(BAD_CAST "1.0");
-  printf("doc created\n");
-
-  root_node = xmlNewNode(NULL, BAD_CAST "observationBatch");
-  printf("root element created\n");
-
+  doc = xmlNewDoc("1.0");
+  root_node = xmlNewNode(NULL, "observationBatch");
   xmlDocSetRootElement(doc, root_node);
 
-  printf("root element set. adding %d segments\n", o->len);
   for (int i = 0; i < o->len; i++)
     addSeg(o->segments + i);
 
