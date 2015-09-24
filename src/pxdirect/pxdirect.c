@@ -17,22 +17,16 @@ xmlNodePtr root_node;
 xmlSchemaValidCtxtPtr schemaCtx = NULL;
 
 char *fldNames[] = {
+  // group of names in order specified in "Default PSV"
   "permID",
   "provID",
   "trkSub",
-  "obsID",
-  "trkID",
   "mode",
   "stn",
   "prg",
   "obsTime",
   "ra",
   "dec",
-  "deltaRA",
-  "deltaDec",
-  "raStar",
-  "decStar",
-  "frame",
   "astCat",
   "rmsRA",
   "rmsDec",
@@ -42,10 +36,21 @@ char *fldNames[] = {
   "photCat",
   "rmsMag",
   "photAp",
-  "nucMag",
   "logSNR",
   "seeing",
   "exp",
+  "notes",
+  "remarks",
+
+  // remaining names in order of definition in ADES
+  "obsID",
+  "trkID",
+  "deltaRA",
+  "deltaDec",
+  "raStar",
+  "decStar",
+  "frame",
+  "nucMag",
   "rmsFit",
   "nStars",
   "ref",
@@ -55,8 +60,6 @@ char *fldNames[] = {
   "precRA",
   "precDec",
   "uncTime",
-  "notes",
-  "remarks",
   "sys",
   "ctr",
   "pos1",
@@ -68,14 +71,16 @@ char *fldNames[] = {
   "posCov22",
   "posCov23",
   "posCov33",
+
+  // radar specific
   "valRad",
   "rmsRad",
   "com",
   "frq",
   "trx",
   "rcv",
-  "orbProd",
-  "photProd",
+
+  // residual specific
   "resRA",
   "resDec",
   "orbID",
@@ -92,12 +97,21 @@ char *fldNames[] = {
   "sigMag",
   "biasMag",
   "photMod",
+
+  // radar residual specific
   "resRad",
   "selRad",
   "sigRad"
 };
 
 int nFlds = sizeof fldNames / sizeof *fldNames;
+
+_Bool isFldName(char *col) {
+  for (int i = 0; i < nFlds; i++)
+    if (!strcmp(fldNames[i], col))
+      return 1;
+  return 0;
+}
 
 // fatal - print message to stdout and terminate program.
 //
@@ -269,6 +283,8 @@ void pxObs()
 {
   int nCols;
   char **colHdrs = splitColHdrs(&nCols);
+  if (strcmp(colHdrs[0], "permID"))
+    fatalPSV("first column must be permID");
   xmlNodePtr obsList = xmlNewChild(root_node, NULL,
                                    BAD_CAST "observations", NULL);
   obsList->line = lineNum;
@@ -286,12 +302,9 @@ void pxObs()
 
       // special handling at first field:
       if (col == 0) {
-        // if first field is some sort of ID,
-        if (!strcmp(fld, fldNames[0]) || // permID
-            !strcmp(fld, fldNames[1]) || // provID
-            !strcmp(fld, fldNames[2]) || // trkSub
-            !strcmp(fld, fldNames[3]) || // obsID
-            !strcmp(fld, fldNames[4])) { // trkID
+        if (isFldName(fld)) {
+          if (strcmp(fld, "permID"))
+            fatalPSV("first column must be permID");
           strcpy(line, line2);  // restore line (we punched holes in it)
           colHdrs = splitColHdrs(&nCols); // parse it as headers
           // break column loop, continue with next PSV line
