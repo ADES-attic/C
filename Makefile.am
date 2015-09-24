@@ -1,6 +1,7 @@
 dist_doc_DATA = readme.md
 
 lib_LIBRARIES = libades.a
+include_HEADERS = inc/ades.h inc/alerr.h inc/ds.h
 libades_a_SOURCES = src/ades/alerr.c src/ades/ps.c src/ades/sx.c src/ades/tables.c
 libades_a_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
 
