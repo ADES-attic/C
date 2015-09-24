@@ -40,7 +40,6 @@ char *fldNames[] = {
   "seeing",
   "exp",
   "notes",
-  "remarks",
 
   // remaining names in order of definition in ADES
   "obsID",
@@ -101,12 +100,16 @@ char *fldNames[] = {
   // radar residual specific
   "resRad",
   "selRad",
-  "sigRad"
+  "sigRad",
+
+  // final field of "Default PSV"
+  "remarks",
 };
 
 int nFlds = sizeof fldNames / sizeof *fldNames;
 
-_Bool isFldName(char *col) {
+_Bool isFldName(char *col)
+{
   for (int i = 0; i < nFlds; i++)
     if (!strcmp(fldNames[i], col))
       return 1;
@@ -242,8 +245,18 @@ char *getPSVLine()
   return p;
 }
 
+typedef struct {
+  int key;
+  int val;
+} intPair;
+
+int pairCmp(const void *a, const void *b)
+{
+  return ((intPair *) a)->key - ((intPair *) b)->key;
+}
+
 // On entry `line` must contain the PSV column headers
-char **splitColHdrs(int *nCols)
+char **splitColHdrs(int *nCols, int **pxo)
 {
   // count pipes first and allocate array for headers
   int nPipes = 0;
@@ -262,19 +275,37 @@ char **splitColHdrs(int *nCols)
     colHdrs[i++] = p;
   }
 
-  // trim headers, catch blank headers, validate against fldNames
+  // trim headers, catch blank headers, validate against fldNames,
+  // populate sort array
+  intPair *psvOrd = malloc(*nCols * sizeof(intPair));
   for (int i = 0; i < *nCols; i++) {
     char *p = trim(colHdrs[i]);
     if (!*p)
       fatalPSV("empty column header");
-    for (int j = 0; strcmp(p, fldNames[j]);)
+    int j;
+    for (j = 0; strcmp(p, fldNames[j]);)
       if (++j == nFlds) {
         snprintf(line, sizeof line,
                  "unknown field used as column header: %s", p);
         fatalPSV(line);
       }
     colHdrs[i] = p;
+    psvOrd[i].key = j;          // sort key is index in fldNames
+    psvOrd[i].val = i;          // sort val is col num
   }
+  qsort(psvOrd, *nCols, sizeof(intPair), pairCmp);
+
+  // determine output order
+  intPair *xmlOrd = malloc(*nCols * sizeof(intPair));
+  for (int i = 0; i < *nCols; i++) {
+    xmlOrd[i].key = psvOrd[i].val;
+    xmlOrd[i].val = i;
+  }
+  qsort(xmlOrd, *nCols, sizeof(intPair), pairCmp);
+  int *xo = malloc(*nCols * sizeof(int));
+  for (int i = 0; i < *nCols; i++)
+    xo[i] = xmlOrd[i].val;
+  *pxo = xo;
   return colHdrs;
 }
 
@@ -282,13 +313,18 @@ char **splitColHdrs(int *nCols)
 void pxObs()
 {
   int nCols;
-  char **colHdrs = splitColHdrs(&nCols);
+  int *xo;
+  char **colHdrs = splitColHdrs(&nCols, &xo);
   if (strcmp(colHdrs[0], "permID"))
     fatalPSV("first column must be permID");
   xmlNodePtr obsList = xmlNewChild(root_node, NULL,
                                    BAD_CAST "observations", NULL);
+  char **fldData = malloc(nCols * sizeof(char *));
   obsList->line = lineNum;
-  while (getPSVLine() && *line != '#') {
+  while (1) {
+ nextLine:
+    if (!getPSVLine() || *line == '#')
+      break;
     strcpy(line2, line);        // save a copy
     char *fld = line;
     xmlNodePtr obs;
@@ -306,9 +342,10 @@ void pxObs()
           if (strcmp(fld, "permID"))
             fatalPSV("first column must be permID");
           strcpy(line, line2);  // restore line (we punched holes in it)
-          colHdrs = splitColHdrs(&nCols); // parse it as headers
+          colHdrs = splitColHdrs(&nCols, &xo); // parse it as headers
+          fldData = realloc(fldData, nCols * sizeof(char *));
           // break column loop, continue with next PSV line
-          break;
+          goto nextLine;
         }
         // normal case: start a new observation.
         // assume optical until mode Radar is found
@@ -316,13 +353,23 @@ void pxObs()
         obs->line = lineNum;
       }
 
-      if (*fld)
-        xmlNewChild(obs, NULL, colHdrs[col], fld)->line = lineNum;
+      fldData[col] = fld;
+
       if (!strcmp(colHdrs[col], "mode") && !strcmp(fld, "Radar"))
         xmlNodeSetName(obs, "radar");
-      if (!end)
-        break;
+      if (!end) {
+        if (col + 1 < nCols)
+          fatalPSV("fewer data fields than column headers");
+        break;                  // normal end of record
+      }
       fld = end;
+    }
+    // fld data collected, write in ADES order
+    for (int col = 0; col < nCols; col++) {
+      int fldNum = xo[col];
+      fld = fldData[fldNum];
+      if (*fld)
+        xmlNewChild(obs, NULL, colHdrs[fldNum], fld)->line = lineNum;
     }
   }
 }
