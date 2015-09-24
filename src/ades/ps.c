@@ -232,6 +232,14 @@ int splitColHdrs(int *nCols, int **pCols)
   return 0;
 }
 
+_Bool isFldName(char *col)
+{
+  for (int i = 0; i < nFlds; i++)
+    if (!strcmp(fldNames[i], col))
+      return 1;
+  return 0;
+}
+
 // On entry `line` must contain the PSV column headers and ol must be a
 // valid pointer to an obsList struct.
 //
@@ -244,6 +252,8 @@ int pxObs(obsList * ol)
   if (rc != 0) {
     return rc;
   }
+  if (fldNums[0] != 0)
+    return errorPSV("first column must be permID");
   int len = 0;
   int cap = 4;
   obsRec *obs = calloc(cap, sizeof(obsRec));
@@ -271,8 +281,9 @@ int pxObs(obsList * ol)
 
       // special handling at first field:
       if (col == 0) {
-        // if first field is permID,
-        if (!strcmp(fld, fldNames[0])) { // permID
+        if (isFldName(fld)) {
+          if (strcmp(fld, "permID"))
+            return errorPSV("first column must be permID");
           strcpy(line, line2);  // restore line (we punched holes in it)
           // and reparse as headers
           rc = splitColHdrs(&nCols, &fldNums);
