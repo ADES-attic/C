@@ -25,7 +25,6 @@ char *fldNames[] = {
   "seeing",
   "exp",
   "notes",
-  "remarks",
 
   // remaining names in order of definition in ADES
   "trkID",
@@ -86,7 +85,10 @@ char *fldNames[] = {
   // radar residual specific
   "resRad",
   "selRad",
-  "sigRad"
+  "sigRad",
+
+  // final field of "Default PSV"
+  "remarks",
 };
 
 int nFlds = sizeof fldNames / sizeof *fldNames;
@@ -199,11 +201,6 @@ void setExp(obsRec * o, char *p)
 void setNotes(obsRec * o, char *p)
 {
   o->notes = p;
-}
-
-void setRemarks(obsRec * o, char *p)
-{
-  o->remarks = p;
 }
 
 void setObsID(obsRec * o, char *p)
@@ -471,6 +468,11 @@ void setSigRad(obsRec * o, char *p)
   o->sigRad = p;
 }
 
+void setRemarks(obsRec * o, char *p)
+{
+  o->remarks = p;
+}
+
 typedef void (*obsRecSetter) (obsRec *, char *);
 obsRecSetter setObsRec[] = {
   setPermID,
@@ -495,7 +497,6 @@ obsRecSetter setObsRec[] = {
   setSeeing,
   setExp,
   setNotes,
-  setRemarks,
   setObsID,
   setTrkID,
   setDeltaRA,
@@ -549,6 +550,7 @@ obsRecSetter setObsRec[] = {
   setResRad,
   setSelRad,
   setSigRad,
+  setRemarks,
 };
 
 char *H1Names[] = {

@@ -5,10 +5,14 @@
 #include <unistd.h>
 #include <unistr.h>
 
+#include <libxml/tree.h>
+#include <libxml/xmlschemas.h>
+
 #include <ades.h>
 #include <alerr.h>
 #include <ds.h>
 
+// globals
 extern char *fldNames[];
 extern int nFlds;
 typedef void (*obsRecSetter) (obsRec *, char *);
@@ -16,11 +20,14 @@ extern obsRecSetter setObsRec[];
 extern char *H1Names[];
 extern int nH1Names;
 
-// more globals
 FILE *fpsv;
 int lineNum;
 char line[512];                 // buffer for holding a single line of PSV
-char line2[512];                // for copies of line, or for formatting error mesages
+char line2[512];                // for copies of line, or for formatting errors
+
+xmlDocPtr doc;
+xmlNodePtr root_node;
+xmlSchemaValidCtxtPtr schemaCtx = NULL;
 
 int errorPSV(char *msg)
 {
@@ -701,7 +708,7 @@ int pxHeader(observationContext * ctx)
 }
 
 // return 0 for no error, non-zero for error
-int readPSVFile(char *fn, observationBatch ** o)
+int readPSVFile(char *fn, observationBatch ** o, char *schema)
 {
   fpsv = fopen(fn, "r");
   if (!fpsv)
@@ -711,6 +718,18 @@ int readPSVFile(char *fn, observationBatch ** o)
     return r;
   if (!*line)
     return error1("file %s empty", fn);
+
+  if (schema) {
+    xmlSchemaParserCtxtPtr pCtx = xmlSchemaNewParserCtxt(schema);
+    if (!pCtx)
+      exit(-1);                 // xml functions emit err msgs
+    xmlSchemaPtr sPtr = xmlSchemaParse(pCtx);
+    if (!sPtr)
+      exit(-1);
+    schemaCtx = xmlSchemaNewValidCtxt(sPtr);
+    if (!schemaCtx)
+      exit(-1);
+  }
 
   observationBatch *b = calloc(1, sizeof(observationBatch));
   *o = b;

@@ -27,7 +27,6 @@ typedef struct {
   dVal seeing;
   dVal exp;
   dVal notes;
-  dVal remarks;
 
   // remaining names in order of definition in ADES
   dVal obsID;
@@ -89,6 +88,9 @@ typedef struct {
   dVal resRad;
   dVal selRad;
   dVal sigRad;
+
+  // final field of "Default PSV"
+  dVal remarks;
 } obsRec;
 
 // a list of observations

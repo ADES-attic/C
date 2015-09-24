@@ -33,7 +33,7 @@ int main(int argc, char **argv)
   }
 
   observationBatch *o;
-  int r = readPSVFile(argv[optind], &o);
+  int r = readPSVFile(argv[optind], &o, schema);
   if (r)
     errExit(r);
   r = writeXMLFile(o, argv[optind + 1]);

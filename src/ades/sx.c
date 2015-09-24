@@ -220,6 +220,7 @@ int addObsList(obsList * ol)
     else
       xRec = xmlNewChild(xObs, NULL, "optical", NULL);
 
+    // group of names in order specified in "Default PSV"
     if (rec->permID)
       xmlNewChild(xRec, NULL, "permID", rec->permID);
     if (rec->provID)
@@ -264,8 +265,8 @@ int addObsList(obsList * ol)
       xmlNewChild(xRec, NULL, "exp", rec->exp);
     if (rec->notes)
       xmlNewChild(xRec, NULL, "notes", rec->notes);
-    if (rec->remarks)
-      xmlNewChild(xRec, NULL, "remarks", rec->remarks);
+
+    // remaining names in order of definition in ADES
     if (rec->obsID)
       xmlNewChild(xRec, NULL, "obsID", rec->obsID);
     if (rec->trkID)
@@ -320,6 +321,8 @@ int addObsList(obsList * ol)
       xmlNewChild(xRec, NULL, "posCov23", rec->posCov23);
     if (rec->posCov33)
       xmlNewChild(xRec, NULL, "posCov33", rec->posCov33);
+
+    // radar specific
     if (rec->valRad)
       xmlNewChild(xRec, NULL, "valRad", rec->valRad);
     if (rec->rmsRad)
@@ -332,6 +335,8 @@ int addObsList(obsList * ol)
       xmlNewChild(xRec, NULL, "trx", rec->trx);
     if (rec->rcv)
       xmlNewChild(xRec, NULL, "rcv", rec->rcv);
+
+    // residual specific
     if (rec->resRA)
       xmlNewChild(xRec, NULL, "resRA", rec->resRA);
     if (rec->resDec)
@@ -364,12 +369,18 @@ int addObsList(obsList * ol)
       xmlNewChild(xRec, NULL, "biasMag", rec->biasMag);
     if (rec->photMod)
       xmlNewChild(xRec, NULL, "photMod", rec->photMod);
+
+    // radar residual specific
     if (rec->resRad)
       xmlNewChild(xRec, NULL, "resRad", rec->resRad);
     if (rec->selRad)
       xmlNewChild(xRec, NULL, "selRad", rec->selRad);
     if (rec->sigRad)
       xmlNewChild(xRec, NULL, "sigRad", rec->sigRad);
+
+    // final field of "Default PSV"
+    if (rec->remarks)
+      xmlNewChild(xRec, NULL, "remarks", rec->remarks);
   }
   return 0;
 }
