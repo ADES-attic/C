@@ -1,10 +1,18 @@
-# px
+# C
 
-PSV to XML direct, as described in meta/explore.md.
+C language ADES library and programs.
 
-Status, 10 Sep 2015:  Simplistic Makefile replaced with standard ./configure,
-make, make install sequence.  My first try at autotools, so certainly
-simplistic as well, possibly wrong, but seemed to work.
+## Contents, 24 Sep 2015
+
+* Configure/make related scripts
+* pxdirect, an executable, a validating PSV to XML converter.
+* A header file with C structures representing the ADES.
+* ades, a C library with callable functions, currently readPSVFile and writeXMLFile
+* px, an executable, a PSV to XML converter based on the ades library.
+
+## Building
+
+The standard ./configure, make sequence should work.  Configure --prefix= and make install if you like.
 
 I think the theory is the committed configure should be good.  To rebuild it
 though the magic spell is
