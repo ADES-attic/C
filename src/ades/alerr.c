@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <string.h>
+
 char errLine[512];
 
 int error(char *msg)
