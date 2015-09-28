@@ -93,6 +93,16 @@ char *fldNames[] = {
 
 int nFlds = sizeof fldNames / sizeof *fldNames;
 
+_Bool isFldName(char *col)
+{
+  // linear search.  common field names are near the beginning.
+  // questionable value in a fancier search.
+  for (int i = 0; i < nFlds; i++)
+    if (!strcmp(fldNames[i], col))
+      return 1;
+  return 0;
+}
+
 void setPermID(obsRec * o, char *p)
 {
   o->permID = p;

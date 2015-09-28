@@ -232,14 +232,6 @@ int splitColHdrs(int *nCols, int **pCols)
   return 0;
 }
 
-_Bool isFldName(char *col)
-{
-  for (int i = 0; i < nFlds; i++)
-    if (!strcmp(fldNames[i], col))
-      return 1;
-  return 0;
-}
-
 // On entry `line` must contain the PSV column headers and ol must be a
 // valid pointer to an obsList struct.
 //
