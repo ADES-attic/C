@@ -1,10 +1,7 @@
 #define _GNU_SOURCE
-#include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 
 #include <libxml/tree.h>
-#include <libxml/xmlschemas.h>
 
 #include <alerr.h>
 #include <tables.h>
@@ -48,7 +45,7 @@ int errorPSV1(char *msg, char *arg)
 //
 // trimRight scans the entire string; any non UTF-8 is detected and a non
 // zero value is returned as an error.
-int trimRight(char * p, size_t * trimmed)
+int trimRight(char *p, size_t * trimmed)
 {
   char *wsStart = NULL;
   int all = strlen(p);
@@ -167,9 +164,9 @@ int getPSVLine()
       return errorPSV("line too long");
     lineNum++;
     // trimRight also validates UTF-8.
-    trimRight(p, &w); // w unused
+    trimRight(p, &w);           // w unused
   }
-  while (!*p); // loop on blank lines
+  while (!*p);                  // loop on blank lines
   return 0;
 }
 
@@ -284,7 +281,7 @@ int pxObs()
 }
 
 // handle a single header line, either a # or ! line.
-int addHdr(xmlNodePtr parent, xmlNodePtr *hdr)
+int addHdr(xmlNodePtr parent, xmlNodePtr * hdr)
 {
   // find keyword start.  first byte of line is known to be # or !,
   // white space can follow, then a keyword must start.
@@ -302,7 +299,7 @@ int addHdr(xmlNodePtr parent, xmlNodePtr *hdr)
   if (r)
     return r;
   if (!*kwEnd)
-    txt = kwEnd; // set txt to empty string
+    txt = kwEnd;                // set txt to empty string
   else {
     firstNonWS(kwEnd, &txt);
     *kwEnd = 0;
@@ -326,7 +323,7 @@ int pxHeader()
                                "observationContext", NULL);
   ctx->line = lineNum;
   xmlNodePtr h1;
-  int r = addHdr(ctx, &h1);  // top level header
+  int r = addHdr(ctx, &h1);     // top level header
   if (r)
     return r;
   h1->line = lineNum;
@@ -349,7 +346,7 @@ int pxHeader()
 
 // pt
 //
-int pt(char *fn, xmlDocPtr *pDoc)
+int pt(char *fn, xmlDocPtr * pDoc)
 {
   fpsv = fopen(fn, "r");
   if (!fpsv) {
