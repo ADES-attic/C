@@ -3,7 +3,7 @@
 #include <ades.h>
 #include <alerr.h>
 
-int ps(char *fn, observationBatch ** o);
+int psNoTree(char *fn, observationBatch ** o);
 
 void errExit(int r)
 {
@@ -21,7 +21,7 @@ int main(int argc, char **argv)
   }
 
   observationBatch *o;
-  int r = ps(argv[1], &o);
+  int r = psNoTree(argv[1], &o);
   if (r)
     errExit(r);
   r = writeXMLFile(o, argv[2]);

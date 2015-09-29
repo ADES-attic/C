@@ -706,7 +706,7 @@ int pxHeader(observationContext * ctx)
 }
 
 // return 0 for no error, non-zero for error
-int ps(char *fn, observationBatch ** o)
+int psNoTree(char *fn, observationBatch ** o)
 {
   fpsv = fopen(fn, "r");
   if (!fpsv)
