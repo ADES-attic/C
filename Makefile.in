@@ -52,7 +52,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = pxdirect$(EXEEXT) px$(EXEEXT) xv$(EXEEXT)
+bin_PROGRAMS = pxdirect$(EXEEXT) px2$(EXEEXT) xv$(EXEEXT)
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(dist_doc_DATA) \
 	$(include_HEADERS) $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -108,11 +108,11 @@ am_libades_a_OBJECTS = libades_a-alerr.$(OBJEXT) \
 	libades_a-pt.$(OBJEXT) libades_a-ts.$(OBJEXT)
 libades_a_OBJECTS = $(am_libades_a_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS)
-am_px_OBJECTS = px-px.$(OBJEXT)
-px_OBJECTS = $(am_px_OBJECTS)
-px_DEPENDENCIES = libades.a
-px_LINK = $(CCLD) $(px_CFLAGS) $(CFLAGS) $(px_LDFLAGS) $(LDFLAGS) -o \
-	$@
+am_px2_OBJECTS = px2-px2.$(OBJEXT)
+px2_OBJECTS = $(am_px2_OBJECTS)
+px2_DEPENDENCIES = libades.a
+px2_LINK = $(CCLD) $(px2_CFLAGS) $(CFLAGS) $(px2_LDFLAGS) $(LDFLAGS) \
+	-o $@
 am_pxdirect_OBJECTS = pxdirect-pxdirect.$(OBJEXT)
 pxdirect_OBJECTS = $(am_pxdirect_OBJECTS)
 pxdirect_LDADD = $(LDADD)
@@ -131,9 +131,9 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libades_a_SOURCES) $(px_SOURCES) $(pxdirect_SOURCES) \
+SOURCES = $(libades_a_SOURCES) $(px2_SOURCES) $(pxdirect_SOURCES) \
 	$(xv_SOURCES)
-DIST_SOURCES = $(libades_a_SOURCES) $(px_SOURCES) $(pxdirect_SOURCES) \
+DIST_SOURCES = $(libades_a_SOURCES) $(px2_SOURCES) $(pxdirect_SOURCES) \
 	$(xv_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -256,10 +256,10 @@ libades_a_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
 pxdirect_SOURCES = src/pxdirect/pxdirect.c
 pxdirect_CFLAGS = -std=c99 $(LIBXML2_CFLAGS)
 pxdirect_LDFLAGS = $(LIBXML2_LIBS)
-px_SOURCES = src/px/px.c
-px_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
-px_LDFLAGS = -lunistring $(LIBXML2_LIBS)
-px_LDADD = libades.a
+px2_SOURCES = src/px2/px2.c
+px2_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
+px2_LDFLAGS = -lunistring $(LIBXML2_LIBS)
+px2_LDADD = libades.a
 xv_SOURCES = src/xv/xv.c
 xv_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
 xv_LDFLAGS = $(LIBXML2_LIBS)
@@ -393,9 +393,9 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-px$(EXEEXT): $(px_OBJECTS) $(px_DEPENDENCIES) $(EXTRA_px_DEPENDENCIES) 
-	@rm -f px$(EXEEXT)
-	$(px_LINK) $(px_OBJECTS) $(px_LDADD) $(LIBS)
+px2$(EXEEXT): $(px2_OBJECTS) $(px2_DEPENDENCIES) $(EXTRA_px2_DEPENDENCIES) 
+	@rm -f px2$(EXEEXT)
+	$(px2_LINK) $(px2_OBJECTS) $(px2_LDADD) $(LIBS)
 pxdirect$(EXEEXT): $(pxdirect_OBJECTS) $(pxdirect_DEPENDENCIES) $(EXTRA_pxdirect_DEPENDENCIES) 
 	@rm -f pxdirect$(EXEEXT)
 	$(pxdirect_LINK) $(pxdirect_OBJECTS) $(pxdirect_LDADD) $(LIBS)
@@ -416,7 +416,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-tables.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-ts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-tv.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/px-px.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/px2-px2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pxdirect-pxdirect.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xv-xv.Po@am__quote@
 
@@ -532,19 +532,19 @@ libades_a-ts.obj: src/ades/ts.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -c -o libades_a-ts.obj `if test -f 'src/ades/ts.c'; then $(CYGPATH_W) 'src/ades/ts.c'; else $(CYGPATH_W) '$(srcdir)/src/ades/ts.c'; fi`
 
-px-px.o: src/px/px.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(px_CFLAGS) $(CFLAGS) -MT px-px.o -MD -MP -MF $(DEPDIR)/px-px.Tpo -c -o px-px.o `test -f 'src/px/px.c' || echo '$(srcdir)/'`src/px/px.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/px-px.Tpo $(DEPDIR)/px-px.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/px/px.c' object='px-px.o' libtool=no @AMDEPBACKSLASH@
+px2-px2.o: src/px2/px2.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(px2_CFLAGS) $(CFLAGS) -MT px2-px2.o -MD -MP -MF $(DEPDIR)/px2-px2.Tpo -c -o px2-px2.o `test -f 'src/px2/px2.c' || echo '$(srcdir)/'`src/px2/px2.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/px2-px2.Tpo $(DEPDIR)/px2-px2.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/px2/px2.c' object='px2-px2.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(px_CFLAGS) $(CFLAGS) -c -o px-px.o `test -f 'src/px/px.c' || echo '$(srcdir)/'`src/px/px.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(px2_CFLAGS) $(CFLAGS) -c -o px2-px2.o `test -f 'src/px2/px2.c' || echo '$(srcdir)/'`src/px2/px2.c
 
-px-px.obj: src/px/px.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(px_CFLAGS) $(CFLAGS) -MT px-px.obj -MD -MP -MF $(DEPDIR)/px-px.Tpo -c -o px-px.obj `if test -f 'src/px/px.c'; then $(CYGPATH_W) 'src/px/px.c'; else $(CYGPATH_W) '$(srcdir)/src/px/px.c'; fi`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/px-px.Tpo $(DEPDIR)/px-px.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/px/px.c' object='px-px.obj' libtool=no @AMDEPBACKSLASH@
+px2-px2.obj: src/px2/px2.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(px2_CFLAGS) $(CFLAGS) -MT px2-px2.obj -MD -MP -MF $(DEPDIR)/px2-px2.Tpo -c -o px2-px2.obj `if test -f 'src/px2/px2.c'; then $(CYGPATH_W) 'src/px2/px2.c'; else $(CYGPATH_W) '$(srcdir)/src/px2/px2.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/px2-px2.Tpo $(DEPDIR)/px2-px2.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/px2/px2.c' object='px2-px2.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(px_CFLAGS) $(CFLAGS) -c -o px-px.obj `if test -f 'src/px/px.c'; then $(CYGPATH_W) 'src/px/px.c'; else $(CYGPATH_W) '$(srcdir)/src/px/px.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(px2_CFLAGS) $(CFLAGS) -c -o px2-px2.obj `if test -f 'src/px2/px2.c'; then $(CYGPATH_W) 'src/px2/px2.c'; else $(CYGPATH_W) '$(srcdir)/src/px2/px2.c'; fi`
 
 pxdirect-pxdirect.o: src/pxdirect/pxdirect.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pxdirect_CFLAGS) $(CFLAGS) -MT pxdirect-pxdirect.o -MD -MP -MF $(DEPDIR)/pxdirect-pxdirect.Tpo -c -o pxdirect-pxdirect.o `test -f 'src/pxdirect/pxdirect.c' || echo '$(srcdir)/'`src/pxdirect/pxdirect.c
@@ -971,8 +971,8 @@ indent:
 	rm src/ades/*.c~
 	indent src/pxdirect/*.c
 	rm src/pxdirect/*.c~
-	indent src/px/*.c
-	rm src/px/*.c~
+	indent src/px2/*.c
+	rm src/px2/*.c~
 	indent src/xv/*.c
 	rm src/xv/*.c~
 
