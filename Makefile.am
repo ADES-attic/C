@@ -5,7 +5,7 @@ include_HEADERS = inc/ades.h inc/ds.h
 libades_a_SOURCES = inc/alerr.h inc/tables.h src/ades/alerr.c src/ades/ps.c src/ades/sx.c src/ades/tables.c src/ades/tv.c src/ades/pt.c src/ades/ts.c
 libades_a_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
 
-bin_PROGRAMS = pxdirect px2 xv
+bin_PROGRAMS = pxdirect px2 pv xv
 
 pxdirect_SOURCES = src/pxdirect/pxdirect.c
 pxdirect_CFLAGS = -std=c99 $(LIBXML2_CFLAGS)
@@ -15,6 +15,11 @@ px2_SOURCES = src/px2/px2.c
 px2_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
 px2_LDFLAGS = -lunistring $(LIBXML2_LIBS)
 px2_LDADD = libades.a
+
+pv_SOURCES = src/pv/pv.c
+pv_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
+pv_LDFLAGS = $(LIBXML2_LIBS)
+pv_LDADD = libades.a
 
 xv_SOURCES = src/xv/xv.c
 xv_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
@@ -31,5 +36,7 @@ indent:
 	rm src/pxdirect/*.c~
 	indent src/px2/*.c
 	rm src/px2/*.c~
+	indent src/pv/*.c
+	rm src/pv/*.c~
 	indent src/xv/*.c
 	rm src/xv/*.c~

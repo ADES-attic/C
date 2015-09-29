@@ -52,7 +52,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = pxdirect$(EXEEXT) px2$(EXEEXT) xv$(EXEEXT)
+bin_PROGRAMS = pxdirect$(EXEEXT) px2$(EXEEXT) pv$(EXEEXT) xv$(EXEEXT)
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(dist_doc_DATA) \
 	$(include_HEADERS) $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -108,6 +108,11 @@ am_libades_a_OBJECTS = libades_a-alerr.$(OBJEXT) \
 	libades_a-pt.$(OBJEXT) libades_a-ts.$(OBJEXT)
 libades_a_OBJECTS = $(am_libades_a_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS)
+am_pv_OBJECTS = pv-pv.$(OBJEXT)
+pv_OBJECTS = $(am_pv_OBJECTS)
+pv_DEPENDENCIES = libades.a
+pv_LINK = $(CCLD) $(pv_CFLAGS) $(CFLAGS) $(pv_LDFLAGS) $(LDFLAGS) -o \
+	$@
 am_px2_OBJECTS = px2-px2.$(OBJEXT)
 px2_OBJECTS = $(am_px2_OBJECTS)
 px2_DEPENDENCIES = libades.a
@@ -131,10 +136,10 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libades_a_SOURCES) $(px2_SOURCES) $(pxdirect_SOURCES) \
-	$(xv_SOURCES)
-DIST_SOURCES = $(libades_a_SOURCES) $(px2_SOURCES) $(pxdirect_SOURCES) \
-	$(xv_SOURCES)
+SOURCES = $(libades_a_SOURCES) $(pv_SOURCES) $(px2_SOURCES) \
+	$(pxdirect_SOURCES) $(xv_SOURCES)
+DIST_SOURCES = $(libades_a_SOURCES) $(pv_SOURCES) $(px2_SOURCES) \
+	$(pxdirect_SOURCES) $(xv_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -260,6 +265,10 @@ px2_SOURCES = src/px2/px2.c
 px2_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
 px2_LDFLAGS = -lunistring $(LIBXML2_LIBS)
 px2_LDADD = libades.a
+pv_SOURCES = src/pv/pv.c
+pv_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
+pv_LDFLAGS = $(LIBXML2_LIBS)
+pv_LDADD = libades.a
 xv_SOURCES = src/xv/xv.c
 xv_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
 xv_LDFLAGS = $(LIBXML2_LIBS)
@@ -393,6 +402,9 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+pv$(EXEEXT): $(pv_OBJECTS) $(pv_DEPENDENCIES) $(EXTRA_pv_DEPENDENCIES) 
+	@rm -f pv$(EXEEXT)
+	$(pv_LINK) $(pv_OBJECTS) $(pv_LDADD) $(LIBS)
 px2$(EXEEXT): $(px2_OBJECTS) $(px2_DEPENDENCIES) $(EXTRA_px2_DEPENDENCIES) 
 	@rm -f px2$(EXEEXT)
 	$(px2_LINK) $(px2_OBJECTS) $(px2_LDADD) $(LIBS)
@@ -416,6 +428,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-tables.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-ts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-tv.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pv-pv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/px2-px2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pxdirect-pxdirect.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xv-xv.Po@am__quote@
@@ -531,6 +544,20 @@ libades_a-ts.obj: src/ades/ts.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/ades/ts.c' object='libades_a-ts.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -c -o libades_a-ts.obj `if test -f 'src/ades/ts.c'; then $(CYGPATH_W) 'src/ades/ts.c'; else $(CYGPATH_W) '$(srcdir)/src/ades/ts.c'; fi`
+
+pv-pv.o: src/pv/pv.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pv_CFLAGS) $(CFLAGS) -MT pv-pv.o -MD -MP -MF $(DEPDIR)/pv-pv.Tpo -c -o pv-pv.o `test -f 'src/pv/pv.c' || echo '$(srcdir)/'`src/pv/pv.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/pv-pv.Tpo $(DEPDIR)/pv-pv.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pv/pv.c' object='pv-pv.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pv_CFLAGS) $(CFLAGS) -c -o pv-pv.o `test -f 'src/pv/pv.c' || echo '$(srcdir)/'`src/pv/pv.c
+
+pv-pv.obj: src/pv/pv.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pv_CFLAGS) $(CFLAGS) -MT pv-pv.obj -MD -MP -MF $(DEPDIR)/pv-pv.Tpo -c -o pv-pv.obj `if test -f 'src/pv/pv.c'; then $(CYGPATH_W) 'src/pv/pv.c'; else $(CYGPATH_W) '$(srcdir)/src/pv/pv.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/pv-pv.Tpo $(DEPDIR)/pv-pv.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pv/pv.c' object='pv-pv.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pv_CFLAGS) $(CFLAGS) -c -o pv-pv.obj `if test -f 'src/pv/pv.c'; then $(CYGPATH_W) 'src/pv/pv.c'; else $(CYGPATH_W) '$(srcdir)/src/pv/pv.c'; fi`
 
 px2-px2.o: src/px2/px2.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(px2_CFLAGS) $(CFLAGS) -MT px2-px2.o -MD -MP -MF $(DEPDIR)/px2-px2.Tpo -c -o px2-px2.o `test -f 'src/px2/px2.c' || echo '$(srcdir)/'`src/px2/px2.c
@@ -973,6 +1000,8 @@ indent:
 	rm src/pxdirect/*.c~
 	indent src/px2/*.c
 	rm src/px2/*.c~
+	indent src/pv/*.c
+	rm src/pv/*.c~
 	indent src/xv/*.c
 	rm src/xv/*.c~
 

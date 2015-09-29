@@ -229,7 +229,7 @@ int pxObs()
   while (1) {
  nextLine:
     r = getPSVLine();
-    if (r != 0)
+    if (r)
       return r;
     if (!*line || *line == '#')
       break;
@@ -269,12 +269,13 @@ int pxObs()
       int fldNum = fldNums[col];
       if (fldNum == F_MODE && !strcmp(fld, "Radar"))
         xmlNodeSetName(obs, "radar");
+      if (*fld)
+        xmlNewChild(obs, NULL, fldNames[fldNum], fld)->line = lineNum;
       if (!end) {
         if (col + 1 < nCols)
           return errorPSV("fewer data fields than column headers");
         break;                  // normal end of record
       }
-      xmlNewChild(obs, NULL, fldNames[fldNum], fld)->line = lineNum;
       fld = end;
     }
   }
@@ -328,8 +329,13 @@ int pxHeader()
     return r;
   h1->line = lineNum;
   xmlNodePtr h2;
-  while (getPSVLine()) {
-    if (line[0] == '!') {
+  while (1) {
+    r = getPSVLine();
+    if (r)
+      return r;
+    if (!*line)
+      break;
+    if (*line == '!') {
       r = addHdr(h1, &h2);
       if (r)
         return r;
@@ -352,8 +358,11 @@ int pt(char *fn, xmlDocPtr * pDoc)
   if (!fpsv) {
     return error1("can't open PSV file %s", fn);
   }
-  if (!getPSVLine())
-    return error1("can't read PSV file %s", fn);
+  int r = getPSVLine();
+  if (r)
+    return r;
+  if (!*line)
+    return error1("PSV file %s empty or unreadable", fn);
 
   doc = xmlNewDoc("1.0");
   root_node = xmlNewNode(NULL, "observationBatch");
@@ -365,8 +374,11 @@ int pt(char *fn, xmlDocPtr * pDoc)
       pxHeader();
     else
       pxObs();
-  }
-  while (getPSVLine());
+    r = getPSVLine();
+    if (r)
+      return r;
+  } while (*line);
 
   *pDoc = doc;
+  return 0;
 }
