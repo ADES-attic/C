@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <ds.h>
 
 // fldNames must parallel the struct obsRec.
