@@ -8,6 +8,8 @@
 #include <ades.h>
 #include <alerr.h>
 
+int ps(char *fn, observationBatch ** o);
+
 void errExit(int r)
 {
   fputs(errLine, stderr);
@@ -33,7 +35,7 @@ int main(int argc, char **argv)
   }
 
   observationBatch *o;
-  int r = readPSVFile(argv[optind], &o, schema);
+  int r = ps(argv[optind], &o);
   if (r)
     errExit(r);
   r = writeXMLFile(o, argv[optind + 1]);
