@@ -166,7 +166,7 @@ void addH1PhotProd(xmlNodePtr xH1, observationContext * ctx)
   ctx->photProd = strdup(xmlNodeGetContent(xH1));
 }
 
-void addCtx(xmlNodePtr xSeg, observationSegment * seg)
+void addSegCtx(xmlNodePtr xSeg, observationSegment * seg)
 {
   observationContext *ctx = calloc(1, sizeof(observationContext));
   seg->ctx = ctx;
@@ -465,7 +465,7 @@ void addObs(xmlNodePtr xObs, obsRec * obs)
   }
 }
 
-void addObsList(xmlNodePtr xSeg, observationSegment * seg)
+void addSegObsList(xmlNodePtr xSeg, observationSegment * seg)
 {
   obsList *ol = malloc(sizeof(obsList));
   seg->ctx = NULL;
@@ -483,6 +483,7 @@ void addObsList(xmlNodePtr xSeg, observationSegment * seg)
         memset(obs + len, 0, len * sizeof(obsRec));
       }
       addObs(xObs, obs + len);
+      len++;
     }
     xObs = xmlNextElementSibling(xObs);
   }
@@ -505,9 +506,9 @@ void ts(xmlDocPtr doc, observationBatch ** obs)
     o->segments = realloc(o->segments, o->len * sizeof(observationSegment));
     observationSegment *seg = o->segments + last;
     if (!strcmp(xSeg->name, "observationContext"))
-      addCtx(xSeg, seg);
+      addSegCtx(xSeg, seg);
     else if (!strcmp(xSeg->name, "observations"))
-      addObsList(xSeg, seg);
+      addSegObsList(xSeg, seg);
     xSeg = xmlNextElementSibling(xSeg);
   }
 }

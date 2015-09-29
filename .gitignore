@@ -1,5 +1,7 @@
 /px2
 /pxdirect
+/px
+/pv
 /xv
 libades.a
 *.psv
