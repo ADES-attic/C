@@ -2,7 +2,7 @@ dist_doc_DATA = readme.md
 
 lib_LIBRARIES = libades.a
 include_HEADERS = inc/ades.h inc/ds.h
-libades_a_SOURCES = inc/alerr.h inc/tables.h src/ades/alerr.c src/ades/ps.c src/ades/psnotree.c src/ades/sx.c src/ades/tables.c src/ades/tv.c src/ades/pt.c src/ades/ts.c
+libades_a_SOURCES = inc/alerr.h inc/tables.h src/ades/alerr.c src/ades/ps.c src/ades/psnotree.c src/ades/sx.c src/ades/tables.c src/ades/tv.c src/ades/pt.c src/ades/ts.c src/ades/xs.c
 libades_a_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
 
 bin_PROGRAMS = pxdirect px2 px pv xv
