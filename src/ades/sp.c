@@ -21,7 +21,7 @@ void writeCtxObservation(ctxObservation * obs)
   fputs("# observation\n", fpsv);
 
   if (obs->count)
-    writeH2("observation", obs->count);
+    writeH2("count", obs->count);
 
   if (obs->type)
     writeH2("type", obs->type);
@@ -75,6 +75,7 @@ void writeCtxMeasurers(ctxNameList * nl)
 
 void writeCtxTelescope(ctxTelescope * tel)
 {
+  fputs("# telescope\n", fpsv);
   if (tel->name)
     writeH2("name", tel->name);
   if (tel->design)
@@ -95,6 +96,7 @@ void writeCtxTelescope(ctxTelescope * tel)
 
 void writeCtxSoftware(ctxSoftware * sw)
 {
+  fputs("# software\n", fpsv);
   if (sw->astrometry)
     writeH2("astrometry", sw->astrometry);
   if (sw->fitOrder)
@@ -306,6 +308,8 @@ void writeObsAligned(_Bool colList[], obsList * ol)
 void writeObsList(obsList * ol)
 {
   _Bool colList[F_NUM];
+  memset(colList, 0, sizeof colList);
+
   setColList(colList, ol);
   if (algn == PA_NONE)
     writeObsNoAlign(colList, ol);
@@ -327,7 +331,7 @@ int writePSVFile(observationBatch * o, char *fn,
   if (!o)
     return error("no data");
 
-  fpsv = fopen(fn, "r");
+  fpsv = fopen(fn, "w");
   if (!fpsv)
     return error1("can't open %s", fn);
 

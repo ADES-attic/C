@@ -53,7 +53,7 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 bin_PROGRAMS = pxdirect$(EXEEXT) px2$(EXEEXT) px$(EXEEXT) pv$(EXEEXT) \
-	xv$(EXEEXT)
+	xp$(EXEEXT) xv$(EXEEXT)
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(dist_doc_DATA) \
 	$(include_HEADERS) $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -131,6 +131,11 @@ pxdirect_OBJECTS = $(am_pxdirect_OBJECTS)
 pxdirect_LDADD = $(LDADD)
 pxdirect_LINK = $(CCLD) $(pxdirect_CFLAGS) $(CFLAGS) \
 	$(pxdirect_LDFLAGS) $(LDFLAGS) -o $@
+am_xp_OBJECTS = xp-xp.$(OBJEXT)
+xp_OBJECTS = $(am_xp_OBJECTS)
+xp_DEPENDENCIES = libades.a
+xp_LINK = $(CCLD) $(xp_CFLAGS) $(CFLAGS) $(xp_LDFLAGS) $(LDFLAGS) -o \
+	$@
 am_xv_OBJECTS = xv-xv.$(OBJEXT)
 xv_OBJECTS = $(am_xv_OBJECTS)
 xv_DEPENDENCIES = libades.a
@@ -145,9 +150,9 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(libades_a_SOURCES) $(pv_SOURCES) $(px_SOURCES) \
-	$(px2_SOURCES) $(pxdirect_SOURCES) $(xv_SOURCES)
+	$(px2_SOURCES) $(pxdirect_SOURCES) $(xp_SOURCES) $(xv_SOURCES)
 DIST_SOURCES = $(libades_a_SOURCES) $(pv_SOURCES) $(px_SOURCES) \
-	$(px2_SOURCES) $(pxdirect_SOURCES) $(xv_SOURCES)
+	$(px2_SOURCES) $(pxdirect_SOURCES) $(xp_SOURCES) $(xv_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -281,6 +286,10 @@ pv_SOURCES = src/pv/pv.c
 pv_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
 pv_LDFLAGS = $(LIBXML2_LIBS)
 pv_LDADD = libades.a
+xp_SOURCES = src/xp/xp.c
+xp_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
+xp_LDFLAGS = $(LIBXML2_LIBS)
+xp_LDADD = libades.a
 xv_SOURCES = src/xv/xv.c
 xv_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
 xv_LDFLAGS = $(LIBXML2_LIBS)
@@ -426,6 +435,9 @@ px2$(EXEEXT): $(px2_OBJECTS) $(px2_DEPENDENCIES) $(EXTRA_px2_DEPENDENCIES)
 pxdirect$(EXEEXT): $(pxdirect_OBJECTS) $(pxdirect_DEPENDENCIES) $(EXTRA_pxdirect_DEPENDENCIES) 
 	@rm -f pxdirect$(EXEEXT)
 	$(pxdirect_LINK) $(pxdirect_OBJECTS) $(pxdirect_LDADD) $(LIBS)
+xp$(EXEEXT): $(xp_OBJECTS) $(xp_DEPENDENCIES) $(EXTRA_xp_DEPENDENCIES) 
+	@rm -f xp$(EXEEXT)
+	$(xp_LINK) $(xp_OBJECTS) $(xp_LDADD) $(LIBS)
 xv$(EXEEXT): $(xv_OBJECTS) $(xv_DEPENDENCIES) $(EXTRA_xv_DEPENDENCIES) 
 	@rm -f xv$(EXEEXT)
 	$(xv_LINK) $(xv_OBJECTS) $(xv_LDADD) $(LIBS)
@@ -450,6 +462,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/px-px.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/px2-px2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pxdirect-pxdirect.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xp-xp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xv-xv.Po@am__quote@
 
 .c.o:
@@ -661,6 +674,20 @@ pxdirect-pxdirect.obj: src/pxdirect/pxdirect.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/pxdirect/pxdirect.c' object='pxdirect-pxdirect.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pxdirect_CFLAGS) $(CFLAGS) -c -o pxdirect-pxdirect.obj `if test -f 'src/pxdirect/pxdirect.c'; then $(CYGPATH_W) 'src/pxdirect/pxdirect.c'; else $(CYGPATH_W) '$(srcdir)/src/pxdirect/pxdirect.c'; fi`
+
+xp-xp.o: src/xp/xp.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xp_CFLAGS) $(CFLAGS) -MT xp-xp.o -MD -MP -MF $(DEPDIR)/xp-xp.Tpo -c -o xp-xp.o `test -f 'src/xp/xp.c' || echo '$(srcdir)/'`src/xp/xp.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/xp-xp.Tpo $(DEPDIR)/xp-xp.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/xp/xp.c' object='xp-xp.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xp_CFLAGS) $(CFLAGS) -c -o xp-xp.o `test -f 'src/xp/xp.c' || echo '$(srcdir)/'`src/xp/xp.c
+
+xp-xp.obj: src/xp/xp.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xp_CFLAGS) $(CFLAGS) -MT xp-xp.obj -MD -MP -MF $(DEPDIR)/xp-xp.Tpo -c -o xp-xp.obj `if test -f 'src/xp/xp.c'; then $(CYGPATH_W) 'src/xp/xp.c'; else $(CYGPATH_W) '$(srcdir)/src/xp/xp.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/xp-xp.Tpo $(DEPDIR)/xp-xp.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/xp/xp.c' object='xp-xp.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xp_CFLAGS) $(CFLAGS) -c -o xp-xp.obj `if test -f 'src/xp/xp.c'; then $(CYGPATH_W) 'src/xp/xp.c'; else $(CYGPATH_W) '$(srcdir)/src/xp/xp.c'; fi`
 
 xv-xv.o: src/xv/xv.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(xv_CFLAGS) $(CFLAGS) -MT xv-xv.o -MD -MP -MF $(DEPDIR)/xv-xv.Tpo -c -o xv-xv.o `test -f 'src/xv/xv.c' || echo '$(srcdir)/'`src/xv/xv.c
@@ -1081,6 +1108,8 @@ indent:
 	rm src/pv/*.c~
 	indent src/xv/*.c
 	rm src/xv/*.c~
+	indent src/xp/*.c
+	rm src/xp/*.c~
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
