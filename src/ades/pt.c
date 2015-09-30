@@ -4,6 +4,7 @@
 #include <libxml/tree.h>
 
 #include <alerr.h>
+#include <ds.h>
 #include <tables.h>
 
 // well this is ugly.  mode is at index 3 in FldNames.
@@ -191,7 +192,7 @@ int splitColHdrs(int *nCols, int **pCols)
   }
 
   // allocate colNums, trim headers, catch blank headers,
-  // validate against fldNames, fill colNums, set pCols
+  // validate against fldNames, fill cols, set pCols
   int *cols = malloc(*nCols * sizeof(int));
   char *p;
   int j;
@@ -201,12 +202,9 @@ int splitColHdrs(int *nCols, int **pCols)
       return r;
     if (!*p)
       return errorPSV("empty column header");
-    for (j = 0; strcmp(p, fldNames[j]);)
-      if (++j == nFlds) {
-        snprintf(line2, sizeof line2,
-                 "unknown field used as column header: %s", p);
-        return errorPSV(line2);
-      }
+    int j = fldNum(p);
+    if (j < 0)
+      return errorPSV1("unknown field used as column header: %s", p);
     cols[i] = j;
   }
   *pCols = cols;
@@ -249,8 +247,9 @@ int pxObs()
 
       // special handling at first field:
       if (col == 0) {
-        if (isFldName(fld)) {
-          if (strcmp(fld, "permID"))
+        int n = fldNum(fld);
+        if (n >= F_PERMID) {  // if it's a field name,
+          if (n != F_PERMID)  // it must be permID
             return errorPSV("first column must be permID");
           strcpy(line, line2);  // restore line (we punched holes in it)
           // reparse it as headers

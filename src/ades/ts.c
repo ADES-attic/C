@@ -4,6 +4,7 @@
 #include <libxml/tree.h>
 
 #include <ds.h>
+#include <tables.h>
 
 // globals
 xmlDocPtr doc;
@@ -216,7 +217,7 @@ void addSegCtx(xmlNodePtr xSeg, observationSegment * seg)
   }
 }
 
-void addObs(xmlNodePtr xObs, obsRec * obs)
+void addObs(xmlNodePtr xObs, obsRec obs)
 {
   xmlNodePtr xFld = xmlFirstElementChild(xObs);
   while (xFld) {
@@ -227,239 +228,9 @@ void addObs(xmlNodePtr xObs, obsRec * obs)
     char *txt = strdup(x);
     xmlFree(x);
 
-    // group of names in order specified in "Default PSV"
-    if (!strcmp(fld, "permID"))
-      obs->permID = txt;
-
-    else if (!strcmp(fld, "provID"))
-      obs->provID = txt;
-
-    else if (!strcmp(fld, "trkSub"))
-      obs->trkSub = txt;
-
-    else if (!strcmp(fld, "mode"))
-      obs->mode = txt;
-
-    else if (!strcmp(fld, "stn"))
-      obs->stn = txt;
-
-    else if (!strcmp(fld, "prg"))
-      obs->prg = txt;
-
-    else if (!strcmp(fld, "obsTime"))
-      obs->obsTime = txt;
-
-    else if (!strcmp(fld, "ra"))
-      obs->ra = txt;
-
-    else if (!strcmp(fld, "dec"))
-      obs->dec = txt;
-
-    else if (!strcmp(fld, "astCat"))
-      obs->astCat = txt;
-
-    else if (!strcmp(fld, "rmsRA"))
-      obs->rmsRA = txt;
-
-    else if (!strcmp(fld, "rmsDec"))
-      obs->rmsDec = txt;
-
-    else if (!strcmp(fld, "rmsCorr"))
-      obs->rmsCorr = txt;
-
-    else if (!strcmp(fld, "mag"))
-      obs->mag = txt;
-
-    else if (!strcmp(fld, "band"))
-      obs->band = txt;
-
-    else if (!strcmp(fld, "photCat"))
-      obs->photCat = txt;
-
-    else if (!strcmp(fld, "rmsMag"))
-      obs->rmsMag = txt;
-
-    else if (!strcmp(fld, "photAp"))
-      obs->photAp = txt;
-
-    else if (!strcmp(fld, "logSNR"))
-      obs->logSNR = txt;
-
-    else if (!strcmp(fld, "seeing"))
-      obs->seeing = txt;
-
-    else if (!strcmp(fld, "exp"))
-      obs->exp = txt;
-
-    else if (!strcmp(fld, "notes"))
-      obs->notes = txt;
-
-    // remaining names in order of definition in ADES
-    else if (!strcmp(fld, "obsID"))
-      obs->obsID = txt;
-
-    else if (!strcmp(fld, "trkID"))
-      obs->trkID = txt;
-
-    else if (!strcmp(fld, "deltaRA"))
-      obs->deltaRA = txt;
-
-    else if (!strcmp(fld, "deltaDec"))
-      obs->deltaDec = txt;
-
-    else if (!strcmp(fld, "raStar"))
-      obs->raStar = txt;
-
-    else if (!strcmp(fld, "decStar"))
-      obs->decStar = txt;
-
-    else if (!strcmp(fld, "frame"))
-      obs->frame = txt;
-
-    else if (!strcmp(fld, "nucMag"))
-      obs->nucMag = txt;
-
-    else if (!strcmp(fld, "rmsFit"))
-      obs->rmsFit = txt;
-
-    else if (!strcmp(fld, "nStars"))
-      obs->nStars = txt;
-
-    else if (!strcmp(fld, "ref"))
-      obs->ref = txt;
-
-    else if (!strcmp(fld, "disc"))
-      obs->disc = txt;
-
-    else if (!strcmp(fld, "subFmt"))
-      obs->subFmt = txt;
-
-    else if (!strcmp(fld, "precTime"))
-      obs->precTime = txt;
-
-    else if (!strcmp(fld, "precRA"))
-      obs->precRA = txt;
-
-    else if (!strcmp(fld, "precDec"))
-      obs->precDec = txt;
-
-    else if (!strcmp(fld, "uncTime"))
-      obs->uncTime = txt;
-
-    else if (!strcmp(fld, "sys"))
-      obs->sys = txt;
-
-    else if (!strcmp(fld, "ctr"))
-      obs->ctr = txt;
-
-    else if (!strcmp(fld, "pos1"))
-      obs->pos1 = txt;
-
-    else if (!strcmp(fld, "pos2"))
-      obs->pos2 = txt;
-
-    else if (!strcmp(fld, "pos3"))
-      obs->pos3 = txt;
-
-    else if (!strcmp(fld, "posCov11"))
-      obs->posCov11 = txt;
-
-    else if (!strcmp(fld, "posCov12"))
-      obs->posCov12 = txt;
-
-    else if (!strcmp(fld, "posCov13"))
-      obs->posCov13 = txt;
-
-    else if (!strcmp(fld, "posCov22"))
-      obs->posCov22 = txt;
-
-    else if (!strcmp(fld, "posCov23"))
-      obs->posCov23 = txt;
-
-    else if (!strcmp(fld, "posCov33"))
-      obs->posCov33 = txt;
-
-    // radar specific
-    else if (!strcmp(fld, "valRad"))
-      obs->valRad = txt;
-
-    else if (!strcmp(fld, "rmsRad"))
-      obs->rmsRad = txt;
-
-    else if (!strcmp(fld, "com"))
-      obs->com = txt;
-
-    else if (!strcmp(fld, "frq"))
-      obs->frq = txt;
-
-    else if (!strcmp(fld, "trx"))
-      obs->trx = txt;
-
-    else if (!strcmp(fld, "rcv"))
-      obs->rcv = txt;
-
-    // residual specific
-    else if (!strcmp(fld, "resRA"))
-      obs->resRA = txt;
-
-    else if (!strcmp(fld, "resDec"))
-      obs->resDec = txt;
-
-    else if (!strcmp(fld, "orbID"))
-      obs->orbID = txt;
-
-    else if (!strcmp(fld, "selASt"))
-      obs->selAst = txt;
-
-    else if (!strcmp(fld, "sigRA"))
-      obs->sigRA = txt;
-
-    else if (!strcmp(fld, "sigDec"))
-      obs->sigDec = txt;
-
-    else if (!strcmp(fld, "sigCorr"))
-      obs->sigCorr = txt;
-
-    else if (!strcmp(fld, "sigTime"))
-      obs->sigTime = txt;
-
-    else if (!strcmp(fld, "biasRA"))
-      obs->biasRA = txt;
-
-    else if (!strcmp(fld, "biasDec"))
-      obs->biasDec = txt;
-
-    else if (!strcmp(fld, "biasTime"))
-      obs->biasTime = txt;
-
-    else if (!strcmp(fld, "resMag"))
-      obs->resMag = txt;
-
-    else if (!strcmp(fld, "selPhot"))
-      obs->selPhot = txt;
-
-    else if (!strcmp(fld, "sigMag"))
-      obs->sigMag = txt;
-
-    else if (!strcmp(fld, "biasMag"))
-      obs->biasMag = txt;
-
-    else if (!strcmp(fld, "photMod"))
-      obs->photMod = txt;
-
-    // radar residual specific
-    else if (!strcmp(fld, "resRad"))
-      obs->resRad = txt;
-
-    else if (!strcmp(fld, "selRad"))
-      obs->selRad = txt;
-
-    else if (!strcmp(fld, "sigRad"))
-      obs->sigRad = txt;
-
-    // final field of "Default PSV"
-    else if (!strcmp(fld, "remarks"))
-      obs->remarks = txt;
+    int n = fldNum(fld);
+    if (n >= F_PERMID)
+      obs[n] = txt;
 
     xFld = xmlNextElementSibling(xFld);
   }
@@ -482,7 +253,7 @@ void addSegObsList(xmlNodePtr xSeg, observationSegment * seg)
         obs = realloc(obs, cap * sizeof(obsRec));
         memset(obs + len, 0, len * sizeof(obsRec));
       }
-      addObs(xObs, obs + len);
+      addObs(xObs, obs[len]);
       len++;
     }
     xObs = xmlNextElementSibling(xObs);
@@ -496,7 +267,7 @@ void addSegObsList(xmlNodePtr xSeg, observationSegment * seg)
 
 void ts(xmlDocPtr doc, observationBatch ** obs)
 {
-  observationBatch *o = malloc(sizeof(observationBatch));
+  observationBatch *o = calloc(1, sizeof(observationBatch));
   *obs = o;
   xmlNodePtr root_node = xmlDocGetRootElement(doc);
   xmlNodePtr xSeg = xmlFirstElementChild(root_node);

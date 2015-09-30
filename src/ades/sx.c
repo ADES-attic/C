@@ -3,6 +3,7 @@
 #include <ades.h>
 #include <alerr.h>
 #include <ds.h>
+#include <tables.h>
 
 #include <libxml/tree.h>
 
@@ -212,175 +213,16 @@ int addObsList(obsList * ol)
   xmlNodePtr xObs = xmlNewChild(root_node, NULL, "observations", NULL);
   int r;
   xmlNodePtr xRec;
-  for (int i = 0; i < ol->len; i++) {
-    obsRec *rec = ol->observations + i;
-
-    if (rec->mode && !strcmp(rec->mode, "Radar"))
+  obsRec *rec = ol->observations;
+  for (int i = 0; i < ol->len; i++, rec++) {
+    if (rec[0][F_MODE] && !strcmp(rec[0][F_MODE], "Radar"))
       xRec = xmlNewChild(xObs, NULL, "radar", NULL);
     else
       xRec = xmlNewChild(xObs, NULL, "optical", NULL);
 
-    // group of names in order specified in "Default PSV"
-    if (rec->permID)
-      xmlNewChild(xRec, NULL, "permID", rec->permID);
-    if (rec->provID)
-      xmlNewChild(xRec, NULL, "provID", rec->provID);
-    if (rec->trkSub)
-      xmlNewChild(xRec, NULL, "trkSub", rec->trkSub);
-    if (rec->mode)
-      xmlNewChild(xRec, NULL, "mode", rec->mode);
-    if (rec->stn)
-      xmlNewChild(xRec, NULL, "stn", rec->stn);
-    if (rec->prg)
-      xmlNewChild(xRec, NULL, "prg", rec->prg);
-    if (rec->obsTime)
-      xmlNewChild(xRec, NULL, "obsTime", rec->obsTime);
-    if (rec->ra)
-      xmlNewChild(xRec, NULL, "ra", rec->ra);
-    if (rec->dec)
-      xmlNewChild(xRec, NULL, "dec", rec->dec);
-    if (rec->astCat)
-      xmlNewChild(xRec, NULL, "astCat", rec->astCat);
-    if (rec->rmsRA)
-      xmlNewChild(xRec, NULL, "rmsRA", rec->rmsRA);
-    if (rec->rmsDec)
-      xmlNewChild(xRec, NULL, "rmsDec", rec->rmsDec);
-    if (rec->rmsCorr)
-      xmlNewChild(xRec, NULL, "rmsCorr", rec->rmsCorr);
-    if (rec->mag)
-      xmlNewChild(xRec, NULL, "mag", rec->mag);
-    if (rec->band)
-      xmlNewChild(xRec, NULL, "band", rec->band);
-    if (rec->photCat)
-      xmlNewChild(xRec, NULL, "photCat", rec->photCat);
-    if (rec->rmsMag)
-      xmlNewChild(xRec, NULL, "rmsMag", rec->rmsMag);
-    if (rec->photAp)
-      xmlNewChild(xRec, NULL, "photAp", rec->photAp);
-    if (rec->logSNR)
-      xmlNewChild(xRec, NULL, "logSNR", rec->logSNR);
-    if (rec->seeing)
-      xmlNewChild(xRec, NULL, "seeing", rec->seeing);
-    if (rec->exp)
-      xmlNewChild(xRec, NULL, "exp", rec->exp);
-    if (rec->notes)
-      xmlNewChild(xRec, NULL, "notes", rec->notes);
-
-    // remaining names in order of definition in ADES
-    if (rec->obsID)
-      xmlNewChild(xRec, NULL, "obsID", rec->obsID);
-    if (rec->trkID)
-      xmlNewChild(xRec, NULL, "trkID", rec->trkID);
-    if (rec->deltaRA)
-      xmlNewChild(xRec, NULL, "deltaRA", rec->deltaRA);
-    if (rec->deltaDec)
-      xmlNewChild(xRec, NULL, "deltaDec", rec->deltaDec);
-    if (rec->raStar)
-      xmlNewChild(xRec, NULL, "raStar", rec->raStar);
-    if (rec->frame)
-      xmlNewChild(xRec, NULL, "frame", rec->frame);
-    if (rec->nucMag)
-      xmlNewChild(xRec, NULL, "nucMag", rec->nucMag);
-    if (rec->rmsFit)
-      xmlNewChild(xRec, NULL, "rmsFit", rec->rmsFit);
-    if (rec->nStars)
-      xmlNewChild(xRec, NULL, "nStars", rec->nStars);
-    if (rec->ref)
-      xmlNewChild(xRec, NULL, "ref", rec->ref);
-    if (rec->disc)
-      xmlNewChild(xRec, NULL, "disc", rec->disc);
-    if (rec->subFmt)
-      xmlNewChild(xRec, NULL, "subFmt", rec->subFmt);
-    if (rec->precTime)
-      xmlNewChild(xRec, NULL, "precTime", rec->precTime);
-    if (rec->precRA)
-      xmlNewChild(xRec, NULL, "precRA", rec->precRA);
-    if (rec->precDec)
-      xmlNewChild(xRec, NULL, "precDec", rec->precDec);
-    if (rec->uncTime)
-      xmlNewChild(xRec, NULL, "uncTime", rec->uncTime);
-    if (rec->sys)
-      xmlNewChild(xRec, NULL, "sys", rec->sys);
-    if (rec->ctr)
-      xmlNewChild(xRec, NULL, "ctr", rec->ctr);
-    if (rec->pos1)
-      xmlNewChild(xRec, NULL, "pos1", rec->pos1);
-    if (rec->pos2)
-      xmlNewChild(xRec, NULL, "pos2", rec->pos2);
-    if (rec->pos3)
-      xmlNewChild(xRec, NULL, "pos3", rec->pos3);
-    if (rec->posCov11)
-      xmlNewChild(xRec, NULL, "posCov11", rec->posCov11);
-    if (rec->posCov12)
-      xmlNewChild(xRec, NULL, "posCov12", rec->posCov12);
-    if (rec->posCov13)
-      xmlNewChild(xRec, NULL, "posCov13", rec->posCov13);
-    if (rec->posCov22)
-      xmlNewChild(xRec, NULL, "posCov22", rec->posCov22);
-    if (rec->posCov23)
-      xmlNewChild(xRec, NULL, "posCov23", rec->posCov23);
-    if (rec->posCov33)
-      xmlNewChild(xRec, NULL, "posCov33", rec->posCov33);
-
-    // radar specific
-    if (rec->valRad)
-      xmlNewChild(xRec, NULL, "valRad", rec->valRad);
-    if (rec->rmsRad)
-      xmlNewChild(xRec, NULL, "rmsRad", rec->rmsRad);
-    if (rec->com)
-      xmlNewChild(xRec, NULL, "com", rec->com);
-    if (rec->frq)
-      xmlNewChild(xRec, NULL, "frq", rec->frq);
-    if (rec->trx)
-      xmlNewChild(xRec, NULL, "trx", rec->trx);
-    if (rec->rcv)
-      xmlNewChild(xRec, NULL, "rcv", rec->rcv);
-
-    // residual specific
-    if (rec->resRA)
-      xmlNewChild(xRec, NULL, "resRA", rec->resRA);
-    if (rec->resDec)
-      xmlNewChild(xRec, NULL, "resDec", rec->resDec);
-    if (rec->orbID)
-      xmlNewChild(xRec, NULL, "orbID", rec->orbID);
-    if (rec->selAst)
-      xmlNewChild(xRec, NULL, "selAst", rec->selAst);
-    if (rec->sigRA)
-      xmlNewChild(xRec, NULL, "sigRA", rec->sigRA);
-    if (rec->sigDec)
-      xmlNewChild(xRec, NULL, "sigDec", rec->sigDec);
-    if (rec->sigCorr)
-      xmlNewChild(xRec, NULL, "sigCorr", rec->sigCorr);
-    if (rec->sigTime)
-      xmlNewChild(xRec, NULL, "sigTime", rec->sigTime);
-    if (rec->biasRA)
-      xmlNewChild(xRec, NULL, "biasRA", rec->biasRA);
-    if (rec->biasDec)
-      xmlNewChild(xRec, NULL, "biasDec", rec->biasDec);
-    if (rec->biasTime)
-      xmlNewChild(xRec, NULL, "biasTime", rec->biasTime);
-    if (rec->resMag)
-      xmlNewChild(xRec, NULL, "resMag", rec->resMag);
-    if (rec->selPhot)
-      xmlNewChild(xRec, NULL, "selPhot", rec->selPhot);
-    if (rec->sigMag)
-      xmlNewChild(xRec, NULL, "sigMag", rec->sigMag);
-    if (rec->biasMag)
-      xmlNewChild(xRec, NULL, "biasMag", rec->biasMag);
-    if (rec->photMod)
-      xmlNewChild(xRec, NULL, "photMod", rec->photMod);
-
-    // radar residual specific
-    if (rec->resRad)
-      xmlNewChild(xRec, NULL, "resRad", rec->resRad);
-    if (rec->selRad)
-      xmlNewChild(xRec, NULL, "selRad", rec->selRad);
-    if (rec->sigRad)
-      xmlNewChild(xRec, NULL, "sigRad", rec->sigRad);
-
-    // final field of "Default PSV"
-    if (rec->remarks)
-      xmlNewChild(xRec, NULL, "remarks", rec->remarks);
+    for (int fld = F_PERMID; fld < F_NUM; fld++)
+      if (rec[0][fld])
+        xmlNewChild(xRec, NULL, fldNames[fld], rec[0][fld]);
   }
   return 0;
 }
