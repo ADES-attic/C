@@ -1,7 +1,7 @@
 
 #include <libxml/tree.h>
 
-#include <ds.h>
+#include <ades.h>
 
 int pt(char *fn, xmlDocPtr * pDoc);
 int tv(xmlDocPtr doc, char *schema);

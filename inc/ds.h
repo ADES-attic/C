@@ -93,6 +93,99 @@ typedef struct {
   dVal remarks;
 } obsRec;
 
+enum fldNum {
+  // group of names in order specified in "Default PSV"
+  F_PERMID,
+  F_PROVID,
+  F_TRKSUB,
+  F_MODE,
+  F_STN,
+  F_PRG,
+  F_OBSTIME,
+  F_RA,
+  F_DEC,
+  F_ASTCAT,
+  F_RMSRA,
+  F_RMSDEC,
+  F_RMSCORR,
+  F_MAG,
+  F_BAND,
+  F_PHOTCAT,
+  F_RMSMAG,
+  F_PHOTAP,
+  F_LOGSNR,
+  F_SEEING,
+  F_EXP,
+  F_NOTES,
+
+  // remaining names in order of definition in ADES
+  F_OBSID,
+  F_TRKID,
+  F_DELTARA,
+  F_DELTADEC,
+  F_RASTAR,
+  F_DECSTAR,
+  F_FRAME,
+  F_NUCMAG,
+  F_RMSFIT,
+  F_NSTARS,
+  F_REF,
+  F_DISC,
+  F_SUBFMT,
+  F_PRECTIME,
+  F_PRECRA,
+  F_PRECDEC,
+  F_UNCTIME,
+  F_SYS,
+  F_CTR,
+  F_POS1,
+  F_POS2,
+  F_POS3,
+  F_POSCOV11,
+  F_POSCOV12,
+  F_POSCOV13,
+  F_POSCOV22,
+  F_POSCOV23,
+  F_POSCOV33,
+
+  // radar specific
+  F_VALRAD,
+  F_RMSRAD,
+  F_COM,
+  F_FRQ,
+  F_TRX,
+  F_RCV,
+
+  // residual specific
+  F_RESRA,
+  F_RESDEC,
+  F_ORBID,
+  F_SELAST,
+  F_SIGRA,
+  F_SIGDEC,
+  F_SIGCORR,
+  F_SIGTIME,
+  F_BIASRA,
+  F_BIASDEC,
+  F_BIASTIME,
+  F_RESMAG,
+  F_SELPHOT,
+  F_SIGMAG,
+  F_BIASMAG,
+  F_PHOTMOD,
+
+  // radar residual specific
+  F_RESRAD,
+  F_SELRAD,
+  F_SIGRAD,
+
+  // final field of "Default PSV"
+  F_REMARKS,
+
+  // number of fields
+  F_NUM
+};
+
 // a list of observations
 typedef struct {
   int len;                      // number of obRecs in array
