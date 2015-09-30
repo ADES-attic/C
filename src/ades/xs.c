@@ -1,7 +1,7 @@
 
 #include <libxml/tree.h>
 
-#include <ds.h>
+#include <ades.h>
 
 int tv(xmlDocPtr doc, char *schema);
 void ts(xmlDocPtr doc, observationBatch ** obs);
@@ -10,7 +10,7 @@ int readXMLFile(char *fn, observationBatch ** obs, char *schema)
 {
   xmlDocPtr doc = xmlParseFile(fn);
   if (!doc)
-    return -1; // xml functions emit error messages
+    return -1;                  // xml functions emit error messages
 
   // printf("read okay\n");
 

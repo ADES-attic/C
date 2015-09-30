@@ -7,10 +7,6 @@
 #include <ds.h>
 #include <tables.h>
 
-// well this is ugly.  mode is at index 3 in FldNames.
-// maybe define macros for all fields in tables.h
-#define F_MODE 3
-
 // globals
 FILE *fpsv;
 int lineNum;
@@ -248,8 +244,8 @@ int pxObs()
       // special handling at first field:
       if (col == 0) {
         int n = fldNum(fld);
-        if (n >= F_PERMID) {  // if it's a field name,
-          if (n != F_PERMID)  // it must be permID
+        if (n >= F_PERMID) {    // if it's a field name,
+          if (n != F_PERMID)    // it must be permID
             return errorPSV("first column must be permID");
           strcpy(line, line2);  // restore line (we punched holes in it)
           // reparse it as headers

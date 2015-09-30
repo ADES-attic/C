@@ -217,7 +217,7 @@ int splitColHdrs(int *nCols, int **pCols)
       return errorPSV("empty column header");
     int j = fldNum(p);
     if (j < 0)
-        return errorPSV1("unknown field used as column header: %s", p);
+      return errorPSV1("unknown field used as column header: %s", p);
     cols[i] = j;
   }
   *pCols = cols;
@@ -266,8 +266,8 @@ int pxObs(obsList * ol)
       // special handling at first field:
       if (col == 0) {
         int n = fldNum(fld);
-        if (n >= F_PERMID) { // if it's a field name,
-          if (n != F_PERMID) // it must be permID
+        if (n >= F_PERMID) {    // if it's a field name,
+          if (n != F_PERMID)    // it must be permID
             return errorPSV("first column must be permID");
           strcpy(line, line2);  // restore line (we punched holes in it)
           // and reparse as headers
