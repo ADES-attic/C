@@ -198,34 +198,60 @@ void setColList(_Bool colList[], obsList * ol)
         colList[n] = 1;
 }
 
-void writeS(dVal v, int width)
+void fmtS(dVal v, int width)
 {
-  fprintf(fpsv, "|%*s", width, v ? v : "");
+  snprintf(line, sizeof line, "|%*s", width, v ? v : "");
 }
 
-void writeD(dVal v, int width, int dpos)
+void writeS(dVal v, int width)
+{
+  fmtS(v, width);
+  fputs(line, fpsv);
+}
+
+int fmtLenS(dVal v, int width)
+{
+  fmtS(v, width);
+  return strlen(line) - 1;      // -1 to not count pipe character
+}
+
+void fmtD(dVal v, int width, int dpos)
 {
   if (!v) {
-    fprintf(fpsv, "|%*s", width, ""); // blank
+    snprintf(line, sizeof line, "|%*s", width, ""); // blank
     return;
   }
   char *tp;
   double d = strtod(v, &tp);
   if (tp == v) {                // can't parse number
-    fprintf(fpsv, "|%-*s", width, v); // left justify unparsable text
+    // left justify unparsable text
+    snprintf(line, sizeof line, "|%-*s", width, v);
     return;
   }
   // try reformatting
   snprintf(line, sizeof line, "|%*.*f", width, width - dpos, d);
   char *p = strchr(line, '.');  // did we get a decimal point?
   if (!p) {
-    fprintf(fpsv, "|%-*s", width, v); // left justify unformattable text
+    // left justify unformattable text
+    snprintf(line, sizeof line, "|%-*s", width, v);
     return;
   }
-  // blank right zeros
+  /* blank right zeros
   for (char *z = strchr(p, 0) - 1; *z == '0'; z--)
     *z = ' ';
+  */
+}
+
+void writeD(dVal v, int width, int dpos)
+{
+  fmtD(v, width, dpos);
   fputs(line, fpsv);
+}
+
+int fmtLenD(dVal v, int width, int dpos)
+{
+  fmtD(v, width, dpos);
+  return strlen(line) - 1;      // -1 to not count pipe character
 }
 
 void defpNoAlign(_Bool colList[], obsRec r)
@@ -301,8 +327,169 @@ void writeObsNoAlign(_Bool colList[], obsList * ol)
   }
 }
 
+void expandCol(int *n, int width)
+{
+  if (width > *n)
+    *n = width;
+}
+
+void defpExpand(int colWidth[], _Bool colList[], obsRec r)
+{
+  expandCol(colWidth + F_PERMID, fmtLenS(r[F_PERMID], 7));
+  expandCol(colWidth + F_PROVID, fmtLenS(r[F_PROVID], -11));
+  expandCol(colWidth + F_TRKSUB, fmtLenS(r[F_TRKSUB], 7));
+  expandCol(colWidth + F_MODE, fmtLenS(r[F_MODE], 3));
+  expandCol(colWidth + F_STN, fmtLenS(r[F_STN], -4));
+  expandCol(colWidth + F_PRG, fmtLenS(r[F_PRG], 2));
+  expandCol(colWidth + F_OBSTIME, fmtLenS(r[F_OBSTIME], -23));
+  expandCol(colWidth + F_RA, fmtLenD(r[F_RA], 11, 4));
+  expandCol(colWidth + F_DEC, fmtLenD(r[F_DEC], 11, 4));
+  expandCol(colWidth + F_ASTCAT, fmtLenS(r[F_ASTCAT], 3));
+  expandCol(colWidth + F_RMSRA, fmtLenD(r[F_RMSRA], 6, 3));
+  expandCol(colWidth + F_RMSDEC, fmtLenD(r[F_RMSDEC], 6, 3));
+  expandCol(colWidth + F_RMSCORR, fmtLenD(r[F_RMSCORR], 5, 2));
+  expandCol(colWidth + F_MAG, fmtLenD(r[F_MAG], 5, 3));
+  expandCol(colWidth + F_BAND, fmtLenS(r[F_BAND], 3));
+  expandCol(colWidth + F_PHOTCAT, fmtLenS(r[F_PHOTCAT], 3));
+  expandCol(colWidth + F_RMSMAG, fmtLenD(r[F_RMSMAG], 4, 2));
+  expandCol(colWidth + F_PHOTAP, fmtLenD(r[F_PHOTAP], 4, 3));
+  expandCol(colWidth + F_LOGSNR, fmtLenD(r[F_LOGSNR], 4, 2));
+  expandCol(colWidth + F_SEEING, fmtLenD(r[F_SEEING], 3, 2));
+  expandCol(colWidth + F_EXP, fmtLenS(r[F_EXP], 4));
+  expandCol(colWidth + F_NOTES, fmtLenS(r[F_NOTES], -5));
+
+  for (int c = F_OBSID; c < F_REMARKS; c++)
+    if (colList[c] && r[c])
+      expandCol(colWidth + c, strlen(r[c]));
+
+  if (r[F_REMARKS])
+    expandCol(colWidth + F_REMARKS, strlen(r[F_REMARKS]));
+}
+
+void minExpand(int colWidth[], _Bool colList[], obsRec r)
+{
+  for (int c = 0; c < F_NUM; c++)
+    if (colList[c] && r[c])
+      expandCol(colWidth + c, strlen(r[c]));
+}
+
+void setColWidth(int colWidth[], _Bool colList[], obsList * ol)
+{
+  // if col hdrs are included in the alignment, start with the col hdr widths
+  if (algn == PA_HDRS)
+    for (int c = 0; c < F_NUM; c++)
+      if (colList[c])
+        colWidth[c] = strlen(fldNames[c]);
+
+  // then in all cases, iterate over obsRecs and expand to fit data
+  obsRec *r = ol->observations;
+  for (int i = 0; i < ol->len; i++, r++)
+    if (defp)
+      defpExpand(colWidth, colList, *r);
+    else
+      minExpand(colWidth, colList, *r);
+}
+
+void writeDefpAlignedRecs(int colWidth[], obsList * ol)
+{
+  obsRec *r = ol->observations;
+  for (int i = 0; i < ol->len; i++, r++) {
+    dVal v = r[0][F_PERMID];
+    fprintf(fpsv, "%*s", colWidth[F_PERMID], v ? v : "");
+
+    writeS(r[0][F_PROVID], -colWidth[F_PROVID]);
+    writeS(r[0][F_TRKSUB], colWidth[F_TRKSUB]);
+    writeS(r[0][F_MODE], colWidth[F_MODE]);
+    writeS(r[0][F_STN], -colWidth[F_STN]);
+    writeS(r[0][F_PRG], colWidth[F_PRG]);
+    writeS(r[0][F_OBSTIME], -colWidth[F_OBSTIME]);
+
+    fmtD(r[0][F_RA], 11, 4);
+    fprintf(fpsv, "|%*s", colWidth[F_RA], line + 1);
+
+    fmtD(r[0][F_DEC], 11, 4);
+    fprintf(fpsv, "|%*s", colWidth[F_DEC], line + 1);
+
+    writeS(r[0][F_ASTCAT], colWidth[F_ASTCAT]);
+
+    fmtD(r[0][F_RMSRA], 6, 3);
+    fprintf(fpsv, "|%*s", colWidth[F_RMSRA], line + 1);
+
+    fmtD(r[0][F_RMSDEC], 6, 3);
+    fprintf(fpsv, "|%*s", colWidth[F_RMSDEC], line + 1);
+
+    fmtD(r[0][F_RMSCORR], 5, 2);
+    fprintf(fpsv, "|%*s", colWidth[F_RMSCORR], line + 1);
+
+    fmtD(r[0][F_MAG], 5, 3);
+    fprintf(fpsv, "|%*s", colWidth[F_MAG], line + 1);
+
+    writeS(r[0][F_BAND], colWidth[F_BAND]);
+    writeS(r[0][F_PHOTCAT], colWidth[F_PHOTCAT]);
+
+    fmtD(r[0][F_RMSMAG], 4, 2);
+    fprintf(fpsv, "|%*s", colWidth[F_RMSMAG], line + 1);
+
+    fmtD(r[0][F_PHOTAP], 4, 3);
+    fprintf(fpsv, "|%*s", colWidth[F_PHOTAP], line + 1);
+
+    fmtD(r[0][F_LOGSNR], 4, 2);
+    fprintf(fpsv, "|%*s", colWidth[F_LOGSNR], line + 1);
+
+    fmtD(r[0][F_SEEING], 3, 2);
+    fprintf(fpsv, "|%*s", colWidth[F_SEEING], line + 1);
+
+    writeS(r[0][F_EXP], colWidth[F_EXP]);
+    writeS(r[0][F_NOTES], -colWidth[F_NOTES]);
+
+    for (int c = F_OBSID; c < F_REMARKS; c++)
+      if (colWidth[c])
+        writeS(r[0][c], colWidth[c]);
+
+    v = r[0][F_REMARKS];
+    fprintf(fpsv, "|%s\n", v ? v : "");
+  }
+}
+
+void writeMinAlignedRecs(int colWidth[], obsList * ol)
+{
+  obsRec *r = ol->observations;
+  for (int i = 0; i < ol->len; i++, r++) {
+    dVal v = r[0][F_PERMID];
+    fprintf(fpsv, "%*s", colWidth[F_PERMID], v ? v : "");
+
+    for (int c = F_PROVID; c < F_NUM; c++)
+      if (colWidth[c])
+        writeS(r[0][c], colWidth[c]);
+
+    fputc('\n', fpsv);
+  }
+}
+
 void writeObsAligned(_Bool colList[], obsList * ol)
 {
+  int colWidth[F_NUM];
+  memset(colWidth, 0, sizeof colWidth);
+  setColWidth(colWidth, colList, ol);
+
+  // write column headings
+  fprintf(fpsv, "%-*s", colWidth[F_PERMID], "permID");
+  if (algn == PA_HDRS) {
+    for (int c = F_PROVID; c < F_NUM; c++)
+      if (colList[c])
+        fprintf(fpsv, "|%-*s", colWidth[c], fldNames[c]);
+  } else {
+    for (int c = F_PROVID; c < F_NUM; c++)
+      if (colList[c])
+        fprintf(fpsv, "|%s", fldNames[c]);
+  }
+  fputc('\n', fpsv);
+
+  // write data
+  if (defp)
+    writeDefpAlignedRecs(colWidth, ol);
+  else
+    writeMinAlignedRecs(colWidth, ol);
 }
 
 void writeObsList(obsList * ol)
