@@ -102,21 +102,3 @@ int fldNum(const char *col)
       return i;
   return -1;
 }
-
-char *H1Names[] = {
-  "observation",
-  "observatory",
-  "contact",
-  "observers",
-  "measurers",
-  "telescope",
-  "software",
-  "comment",
-  "coinvestigators",
-  "collaborators",
-  "fundingSource",
-  "orbProd",
-  "photProd"
-};
-
-int nH1Names = sizeof H1Names / sizeof *H1Names;

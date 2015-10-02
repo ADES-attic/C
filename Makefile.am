@@ -2,19 +2,10 @@ dist_doc_DATA = readme.md
 
 lib_LIBRARIES = libades.a
 include_HEADERS = inc/ades.h inc/ds.h
-libades_a_SOURCES = inc/alerr.h inc/tables.h src/ades/alerr.c src/ades/ps.c src/ades/psnotree.c src/ades/sp.c src/ades/sx.c src/ades/tables.c src/ades/tv.c src/ades/pt.c src/ades/ts.c src/ades/xs.c
+libades_a_SOURCES = inc/alerr.h inc/tables.h src/ades/alerr.c src/ades/ps.c src/ades/sp.c src/ades/sx.c src/ades/tables.c src/ades/tv.c src/ades/pt.c src/ades/ts.c src/ades/xs.c
 libades_a_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
 
-bin_PROGRAMS = pxdirect px2 px pv xp xv
-
-pxdirect_SOURCES = src/pxdirect/pxdirect.c
-pxdirect_CFLAGS = -std=c99 $(LIBXML2_CFLAGS)
-pxdirect_LDFLAGS = $(LIBXML2_LIBS)
-
-px2_SOURCES = src/px2/px2.c
-px2_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
-px2_LDFLAGS = -lunistring $(LIBXML2_LIBS)
-px2_LDADD = libades.a
+bin_PROGRAMS = px pv xp xv
 
 px_SOURCES = src/px/px.c
 px_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
@@ -42,10 +33,6 @@ indent:
 	rm inc/*.h~
 	indent src/ades/*.c
 	rm src/ades/*.c~
-	indent src/pxdirect/*.c
-	rm src/pxdirect/*.c~
-	indent src/px2/*.c
-	rm src/px2/*.c~
 	indent src/px/*.c
 	rm src/px/*.c~
 	indent src/pv/*.c
