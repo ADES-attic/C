@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <libxml/tree.h>
+
 #include <ades.h>
 #include <alerr.h>
 #include <tables.h>
@@ -10,6 +12,7 @@ FILE *fpsv;
 _Bool defp;
 int algn;
 char line[512];
+char line2[512];
 
 void writeH2(char *kwd, char *val)
 {
@@ -221,25 +224,31 @@ void fmtD(dVal v, int width, int dpos)
     snprintf(line, sizeof line, "|%*s", width, ""); // blank
     return;
   }
-  char *tp;
-  double d = strtod(v, &tp);
-  if (tp == v) {                // can't parse number
-    // left justify unparsable text
-    snprintf(line, sizeof line, "|%-*s", width, v);
+  char *dp = strchr(v, '.');
+  if (!dp) {
+    // no decimal point: right align to dpos, then left align in field
+    snprintf(line2, sizeof line2, "%*s", dpos-1, v);
+    snprintf(line, sizeof line, "|%-*s", width, line2);
     return;
   }
-  // try reformatting
-  snprintf(line, sizeof line, "|%*.*f", width, width - dpos, d);
-  char *p = strchr(line, '.');  // did we get a decimal point?
-  if (!p) {
-    // left justify unformattable text
-    snprintf(line, sizeof line, "|%-*s", width, v);
-    return;
+  // decimal point present.
+  // count characters before decimal point
+  int before = 0;
+  int all = strlen(v);
+  char *p = v;
+  while (*p != '.') {
+    int len = all;
+    xmlGetUTF8Char(p, &len);
+    before++;
+    all -= len;
+    p += len;
   }
-  /* blank right zeros
-  for (char *z = strchr(p, 0) - 1; *z == '0'; z--)
-    *z = ' ';
-  */
+  // pad left to align decimal point
+  int pad = dpos-before-1;
+  if (pad < 0)
+    pad = 0;
+  snprintf(line2, sizeof line2, "%*s%s", pad, "", v);
+  snprintf(line, sizeof line, "|%-*s", width, line2);
 }
 
 void writeD(dVal v, int width, int dpos)
@@ -404,40 +413,23 @@ void writeDefpAlignedRecs(int colWidth[], obsList * ol)
     writeS(r[0][F_PRG], colWidth[F_PRG]);
     writeS(r[0][F_OBSTIME], -colWidth[F_OBSTIME]);
 
-    fmtD(r[0][F_RA], 11, 4);
-    fprintf(fpsv, "|%*s", colWidth[F_RA], line + 1);
-
-    fmtD(r[0][F_DEC], 11, 4);
-    fprintf(fpsv, "|%*s", colWidth[F_DEC], line + 1);
+    writeD(r[0][F_RA], colWidth[F_RA], 4);
+    writeD(r[0][F_DEC], colWidth[F_DEC], 4);
 
     writeS(r[0][F_ASTCAT], colWidth[F_ASTCAT]);
 
-    fmtD(r[0][F_RMSRA], 6, 3);
-    fprintf(fpsv, "|%*s", colWidth[F_RMSRA], line + 1);
-
-    fmtD(r[0][F_RMSDEC], 6, 3);
-    fprintf(fpsv, "|%*s", colWidth[F_RMSDEC], line + 1);
-
-    fmtD(r[0][F_RMSCORR], 5, 2);
-    fprintf(fpsv, "|%*s", colWidth[F_RMSCORR], line + 1);
-
-    fmtD(r[0][F_MAG], 5, 3);
-    fprintf(fpsv, "|%*s", colWidth[F_MAG], line + 1);
+    writeD(r[0][F_RMSRA], colWidth[F_RMSRA], 3);
+    writeD(r[0][F_RMSDEC], colWidth[F_RMSDEC], 3);
+    writeD(r[0][F_RMSCORR], colWidth[F_RMSCORR], 2);
+    writeD(r[0][F_MAG], colWidth[F_MAG], 3);
 
     writeS(r[0][F_BAND], colWidth[F_BAND]);
     writeS(r[0][F_PHOTCAT], colWidth[F_PHOTCAT]);
 
-    fmtD(r[0][F_RMSMAG], 4, 2);
-    fprintf(fpsv, "|%*s", colWidth[F_RMSMAG], line + 1);
-
-    fmtD(r[0][F_PHOTAP], 4, 3);
-    fprintf(fpsv, "|%*s", colWidth[F_PHOTAP], line + 1);
-
-    fmtD(r[0][F_LOGSNR], 4, 2);
-    fprintf(fpsv, "|%*s", colWidth[F_LOGSNR], line + 1);
-
-    fmtD(r[0][F_SEEING], 3, 2);
-    fprintf(fpsv, "|%*s", colWidth[F_SEEING], line + 1);
+    writeD(r[0][F_RMSMAG], colWidth[F_RMSMAG], 2);
+    writeD(r[0][F_PHOTAP], colWidth[F_PHOTAP], 3);
+    writeD(r[0][F_LOGSNR], colWidth[F_LOGSNR], 2);
+    writeD(r[0][F_SEEING], colWidth[F_SEEING], 2);
 
     writeS(r[0][F_EXP], colWidth[F_EXP]);
     writeS(r[0][F_NOTES], -colWidth[F_NOTES]);
