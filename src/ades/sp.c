@@ -227,7 +227,7 @@ void fmtD(dVal v, int width, int dpos)
   char *dp = strchr(v, '.');
   if (!dp) {
     // no decimal point: right align to dpos, then left align in field
-    snprintf(line2, sizeof line2, "%*s", dpos-1, v);
+    snprintf(line2, sizeof line2, "%*s", dpos - 1, v);
     snprintf(line, sizeof line, "|%-*s", width, line2);
     return;
   }
@@ -244,7 +244,7 @@ void fmtD(dVal v, int width, int dpos)
     p += len;
   }
   // pad left to align decimal point
-  int pad = dpos-before-1;
+  int pad = dpos - before - 1;
   if (pad < 0)
     pad = 0;
   snprintf(line2, sizeof line2, "%*s%s", pad, "", v);
