@@ -1,3 +1,6 @@
+//
+// ds.h -- data structures implementing the ADES.
+
 #ifndef DS_H
 #define DS_H
 

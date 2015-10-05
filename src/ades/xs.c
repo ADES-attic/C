@@ -1,3 +1,7 @@
+//
+// xs.c -- (X)ML to C (S)truct conversion.
+//
+// Implements API function readXMLFile().
 
 #include <libxml/tree.h>
 

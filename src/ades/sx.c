@@ -1,3 +1,8 @@
+//
+// sx.c -- C (S)truct to (X)ML conversion.
+//
+// Implements API function writeXMLFile().
+
 #include <string.h>
 
 #include <ades.h>

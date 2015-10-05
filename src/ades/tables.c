@@ -1,3 +1,11 @@
+//
+// tables.c
+//
+// Really just one table, the list of observation record field names,
+// and a function to look up a name and return an index.
+//
+// Currently intended for use within the ades library.
+
 #include <string.h>
 
 #include <ds.h>

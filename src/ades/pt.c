@@ -1,3 +1,12 @@
+//
+// pt.c -- (P)SV to libxml2 (T)ree conversion.
+//
+// Implements function pt().
+//
+// This function intended for use primarily within the ades library and not
+// as an API function.  The result is a libxml2 xmlDocPtr and the idea is that
+// API users should not be required to interpret libxml2 data types.
+
 #define _GNU_SOURCE
 #include <string.h>
 

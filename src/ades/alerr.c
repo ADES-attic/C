@@ -1,3 +1,6 @@
+//
+// alerr.c -- error handling for use within the ades library.
+
 #include <stdio.h>
 #include <string.h>
 

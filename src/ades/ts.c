@@ -1,3 +1,12 @@
+//
+// ts.c -- libxml2 (T)ree to C (S)truct conversion.
+//
+// Implements function ts().
+//
+// This function intended for use primarily within the ades library and not
+// as an API function.  The argument is a libxml2 xmlDocPtr and the idea is
+// that API users should not be required to handle libxml2 data types.
+
 #define _GNU_SOURCE
 #include <string.h>
 

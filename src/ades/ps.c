@@ -1,3 +1,7 @@
+//
+// ps.c -- (P)SV to C (S)truct conversion.
+//
+// Implements library function readPSVFile().
 
 #include <libxml/tree.h>
 

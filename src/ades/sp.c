@@ -1,3 +1,8 @@
+//
+// sp.c -- C (S)truct to (P)SV conversion
+//
+// Implements API function writePSVFile().
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
