@@ -217,7 +217,7 @@ int splitColHdrs(int *nCols, int **pCols)
 }
 
 // On entry `line` must contain the PSV column headers
-int pxObs()
+int ptObs()
 {
   int nCols;
   int *fldNums;
@@ -317,12 +317,12 @@ int addHdr(xmlNodePtr parent, xmlNodePtr * hdr)
   return 0;
 }
 
-// pxHeader
+// ptHeader
 //
 // on entry `line` contains a top level (#) header line.
 // parse the observation header into the tree, skip blank lines,
-// on non-header, non-blank line, call pxObs.
-int pxHeader()
+// on non-header, non-blank line, call ptObs.
+int ptHeader()
 {
   xmlNodePtr ctx = xmlNewChild(root_node, NULL,
                                "observationContext", NULL);
@@ -350,7 +350,7 @@ int pxHeader()
         return r;
       h1->line = lineNum;
     } else
-      return pxObs();
+      return ptObs();
   }
 }
 
@@ -375,9 +375,9 @@ int pt(char *fn, xmlDocPtr * pDoc)
 
   do {
     if (*line == '#')
-      pxHeader();
+      ptHeader();
     else
-      pxObs();
+      ptObs();
     r = getPSVLine();
     if (r)
       return r;
