@@ -3,13 +3,8 @@
 //
 // Implements library function readPSVFile().
 
-#include <libxml/tree.h>
-
 #include <ades.h>
-
-int pt(char *fn, xmlDocPtr * pDoc);
-int tv(xmlDocPtr doc, char *schema);
-void ts(xmlDocPtr doc, observationBatch ** obs);
+#include <globals.h>
 
 int readPSVFile(char *fn, observationBatch ** obs, char *schema)
 {

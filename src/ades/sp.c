@@ -3,21 +3,14 @@
 //
 // Implements API function writePSVFile().
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-#include <libxml/tree.h>
-
 #include <ades.h>
-#include <alerr.h>
-#include <tables.h>
+#include <globals.h>
 
 FILE *fpsv;
 _Bool defp;
 int algn;
-char line[512];
-char line2[512];
 
 void writeH2(char *kwd, char *val)
 {

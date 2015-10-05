@@ -1,7 +1,5 @@
 
-#include <libxml/tree.h>
-
-extern int tv(xmlDocPtr doc, char *schema);
+#include <globals.h>
 
 int main(int argc, char **argv)
 {

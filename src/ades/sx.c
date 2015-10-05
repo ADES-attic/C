@@ -5,16 +5,7 @@
 
 #include <string.h>
 
-#include <ades.h>
-#include <alerr.h>
-#include <ds.h>
-#include <tables.h>
-
-#include <libxml/tree.h>
-
-// globals
-xmlDocPtr doc;
-xmlNodePtr root_node;
+#include <globals.h>
 
 int addCtxObservation(ctxObservation * obs, xmlNodePtr xCtx)
 {

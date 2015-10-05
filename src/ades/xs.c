@@ -3,12 +3,8 @@
 //
 // Implements API function readXMLFile().
 
-#include <libxml/tree.h>
-
 #include <ades.h>
-
-int tv(xmlDocPtr doc, char *schema);
-void ts(xmlDocPtr doc, observationBatch ** obs);
+#include <globals.h>
 
 int readXMLFile(char *fn, observationBatch ** obs, char *schema)
 {

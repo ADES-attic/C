@@ -1,15 +1,47 @@
 //
-// tables.c
-//
-// Really just one table, the list of observation record field names,
-// and a function to look up a name and return an index.
+// globals.c
 //
 // Currently intended for use within the ades library.
 
+#include <stdio.h>
 #include <string.h>
 
+#include <globals.h>
 #include <ds.h>
 
+// common data for reading and parsing files
+int lineNum;                    // for error messages
+char line[512];                 // buffer for holding a single line
+char line2[512];                // for copies of line
+
+xmlDocPtr doc;
+xmlNodePtr root_node;
+
+// common error buffer for use within the ades library.
+char errLine[512];
+
+int error(char *msg)
+{
+  strcpy(errLine, msg);
+  return -1;
+}
+
+int error1(char *msg, char *arg)
+{
+  snprintf(errLine, sizeof errLine, msg, arg);
+  return -1;
+}
+
+// exit function for use from executables.
+// not to be used from library functions.
+void errExit(int r)
+{
+  fputs(errLine, stderr);
+  fputc('\n', stderr);
+  exit(r);
+}
+
+// List of observation record field names,
 // fldNames must parallel the struct obsRec.
 char *fldNames[] = {
   // group of names specified in "Default PSV"
@@ -101,6 +133,7 @@ char *fldNames[] = {
   "remarks",
 };
 
+// look up a name and return an index.
 int fldNum(const char *col)
 {
   // linear search.  common field names are near the beginning.

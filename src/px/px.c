@@ -1,19 +1,8 @@
 #define _GNU_SOURCE
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
-#include <libxml/tree.h>
-
 #include <ades.h>
-#include <alerr.h>
-
-void errExit(int r)
-{
-  fputs(errLine, stderr);
-  fputc('\n', stderr);
-  exit(r);
-}
+#include <globals.h>
 
 int main(int argc, char **argv)
 {

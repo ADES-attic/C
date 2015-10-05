@@ -7,8 +7,9 @@
 // as an API function.  The argument is a libxml2 xmlDocPtr and the idea is
 // that API users should not be required to handle libxml2 data types.
 
-#include <libxml/tree.h>
 #include <libxml/xmlschemas.h>
+
+#include <globals.h>
 
 // tv (tree validate) validates an in-memory doc tree against a schema.
 //

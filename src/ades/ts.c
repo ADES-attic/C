@@ -10,14 +10,7 @@
 #define _GNU_SOURCE
 #include <string.h>
 
-#include <libxml/tree.h>
-
-#include <ds.h>
-#include <tables.h>
-
-// globals
-xmlDocPtr doc;
-xmlNodePtr root_node;
+#include <globals.h>
 
 void addH1Observation(xmlNodePtr xH1, observationContext * ctx)
 {

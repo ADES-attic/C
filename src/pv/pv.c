@@ -1,17 +1,5 @@
 
-#include <libxml/tree.h>
-
-#include <alerr.h>
-
-int pt(char *fn, xmlDocPtr * pDoc);
-int tv(xmlDocPtr doc, char *schema);
-
-void errExit(int r)
-{
-  fputs(errLine, stderr);
-  fputc('\n', stderr);
-  exit(r);
-}
+#include <globals.h>
 
 int main(int argc, char **argv)
 {

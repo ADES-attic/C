@@ -10,20 +10,11 @@
 #define _GNU_SOURCE
 #include <string.h>
 
-#include <libxml/tree.h>
+#include <globals.h>
 
-#include <alerr.h>
-#include <ds.h>
-#include <tables.h>
-
-// globals
 FILE *fpsv;
-int lineNum;
-char line[512];                 // buffer for holding a single line of PSV
-char line2[512];                // for copies of line
-xmlDocPtr doc;
-xmlNodePtr root_node;
 
+// errorPSV functions also use globals from globals.c
 int errorPSV(char *msg)
 {
   snprintf(errLine, sizeof errLine, "PSV line %d: %s", lineNum, msg);
