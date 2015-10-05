@@ -2,19 +2,26 @@
 
 C language ADES library and programs.
 
-## Contents, 24 Sep 2015
+## Contents, 2 Oct 2015
 
-* Configure/make related scripts
-* pxdirect, an executable, a validating PSV to XML converter.
-* A header file with C structures representing the ADES.
-* ades, a C library with callable functions, currently readPSVFile and writeXMLFile
-* px, an executable, a PSV to XML converter based on the ades library.
+* Executables to validate ADES XML and PSV files and convert between the two formats.
+* A linkable C library with callable functions.
+* Configure/make related scripts.
+
+Executables are:
+* xv - validate an XML file in place.
+* pv - validate a PSV file in place.
+* xp - convert an XML file to a PSV file.
+* px - convert a PSV file to an XML file.
+
+Each executable prints a usage message when run without arguments.
+
+See `inc/ades.h` for the library API.  See `inc/ds.h` for data structures used by the library.
 
 ## Building
 
 The standard ./configure, make sequence should work.  Configure --prefix= and make install if you like.
 
-I think the theory is the committed configure should be good.  To rebuild it
-though the magic spell is
+The provided ./configure should work.  To rebuild it though the magic spell is
 
     autoreconf --install
