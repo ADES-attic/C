@@ -8,9 +8,9 @@
 #include <ds.h>
 
 // common data for reading and parsing files
-extern int lineNum;                    // for error messages
-extern char line[512];                 // buffer for holding a single line 
-extern char line2[512];                // for copies of line
+extern int lineNum;             // for error messages
+extern char line[512];          // buffer for holding a single line 
+extern char line2[512];         // for copies of line
 
 extern xmlDocPtr doc;
 extern xmlNodePtr root_node;
