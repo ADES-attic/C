@@ -52,7 +52,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = px$(EXEEXT) pv$(EXEEXT) xp$(EXEEXT) xv$(EXEEXT)
+bin_PROGRAMS = mx$(EXEEXT) px$(EXEEXT) pv$(EXEEXT) xp$(EXEEXT) \
+	xv$(EXEEXT)
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(dist_doc_DATA) \
 	$(include_HEADERS) $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -103,12 +104,18 @@ ARFLAGS = cru
 libades_a_AR = $(AR) $(ARFLAGS)
 libades_a_LIBADD =
 am_libades_a_OBJECTS = libades_a-globals.$(OBJEXT) \
-	libades_a-mt.$(OBJEXT) libades_a-ps.$(OBJEXT) \
-	libades_a-sp.$(OBJEXT) libades_a-sx.$(OBJEXT) \
-	libades_a-tv.$(OBJEXT) libades_a-pt.$(OBJEXT) \
-	libades_a-ts.$(OBJEXT) libades_a-xs.$(OBJEXT)
+	libades_a-ms.$(OBJEXT) libades_a-mt.$(OBJEXT) \
+	libades_a-ps.$(OBJEXT) libades_a-sp.$(OBJEXT) \
+	libades_a-sx.$(OBJEXT) libades_a-tv.$(OBJEXT) \
+	libades_a-pt.$(OBJEXT) libades_a-ts.$(OBJEXT) \
+	libades_a-xs.$(OBJEXT)
 libades_a_OBJECTS = $(am_libades_a_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS)
+am_mx_OBJECTS = mx-mx.$(OBJEXT)
+mx_OBJECTS = $(am_mx_OBJECTS)
+mx_DEPENDENCIES = libades.a
+mx_LINK = $(CCLD) $(mx_CFLAGS) $(CFLAGS) $(mx_LDFLAGS) $(LDFLAGS) -o \
+	$@
 am_pv_OBJECTS = pv-pv.$(OBJEXT)
 pv_OBJECTS = $(am_pv_OBJECTS)
 pv_DEPENDENCIES = libades.a
@@ -137,10 +144,10 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libades_a_SOURCES) $(pv_SOURCES) $(px_SOURCES) \
-	$(xp_SOURCES) $(xv_SOURCES)
-DIST_SOURCES = $(libades_a_SOURCES) $(pv_SOURCES) $(px_SOURCES) \
-	$(xp_SOURCES) $(xv_SOURCES)
+SOURCES = $(libades_a_SOURCES) $(mx_SOURCES) $(pv_SOURCES) \
+	$(px_SOURCES) $(xp_SOURCES) $(xv_SOURCES)
+DIST_SOURCES = $(libades_a_SOURCES) $(mx_SOURCES) $(pv_SOURCES) \
+	$(px_SOURCES) $(xp_SOURCES) $(xv_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -257,8 +264,12 @@ top_srcdir = @top_srcdir@
 dist_doc_DATA = readme.md
 lib_LIBRARIES = libades.a
 include_HEADERS = inc/ades.h inc/ds.h
-libades_a_SOURCES = inc/globals.h src/ades/globals.c src/ades/mt.c src/ades/ps.c src/ades/sp.c src/ades/sx.c src/ades/tv.c src/ades/pt.c src/ades/ts.c src/ades/xs.c
+libades_a_SOURCES = inc/globals.h src/ades/globals.c src/ades/ms.c src/ades/mt.c src/ades/ps.c src/ades/sp.c src/ades/sx.c src/ades/tv.c src/ades/pt.c src/ades/ts.c src/ades/xs.c
 libades_a_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
+mx_SOURCES = src/mx/mx.c
+mx_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
+mx_LDFLAGS = $(LIBXML2_LIBS)
+mx_LDADD = libades.a
 px_SOURCES = src/px/px.c
 px_CFLAGS = -std=c99 -Iinc $(LIBXML2_CFLAGS)
 px_LDFLAGS = $(LIBXML2_LIBS)
@@ -404,6 +415,9 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+mx$(EXEEXT): $(mx_OBJECTS) $(mx_DEPENDENCIES) $(EXTRA_mx_DEPENDENCIES) 
+	@rm -f mx$(EXEEXT)
+	$(mx_LINK) $(mx_OBJECTS) $(mx_LDADD) $(LIBS)
 pv$(EXEEXT): $(pv_OBJECTS) $(pv_DEPENDENCIES) $(EXTRA_pv_DEPENDENCIES) 
 	@rm -f pv$(EXEEXT)
 	$(pv_LINK) $(pv_OBJECTS) $(pv_LDADD) $(LIBS)
@@ -424,6 +438,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-globals.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-ms.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-mt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-ps.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-pt.Po@am__quote@
@@ -432,6 +447,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-ts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-tv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libades_a-xs.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mx-mx.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pv-pv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/px-px.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xp-xp.Po@am__quote@
@@ -464,6 +480,20 @@ libades_a-globals.obj: src/ades/globals.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/ades/globals.c' object='libades_a-globals.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -c -o libades_a-globals.obj `if test -f 'src/ades/globals.c'; then $(CYGPATH_W) 'src/ades/globals.c'; else $(CYGPATH_W) '$(srcdir)/src/ades/globals.c'; fi`
+
+libades_a-ms.o: src/ades/ms.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -MT libades_a-ms.o -MD -MP -MF $(DEPDIR)/libades_a-ms.Tpo -c -o libades_a-ms.o `test -f 'src/ades/ms.c' || echo '$(srcdir)/'`src/ades/ms.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libades_a-ms.Tpo $(DEPDIR)/libades_a-ms.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/ades/ms.c' object='libades_a-ms.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -c -o libades_a-ms.o `test -f 'src/ades/ms.c' || echo '$(srcdir)/'`src/ades/ms.c
+
+libades_a-ms.obj: src/ades/ms.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -MT libades_a-ms.obj -MD -MP -MF $(DEPDIR)/libades_a-ms.Tpo -c -o libades_a-ms.obj `if test -f 'src/ades/ms.c'; then $(CYGPATH_W) 'src/ades/ms.c'; else $(CYGPATH_W) '$(srcdir)/src/ades/ms.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libades_a-ms.Tpo $(DEPDIR)/libades_a-ms.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/ades/ms.c' object='libades_a-ms.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -c -o libades_a-ms.obj `if test -f 'src/ades/ms.c'; then $(CYGPATH_W) 'src/ades/ms.c'; else $(CYGPATH_W) '$(srcdir)/src/ades/ms.c'; fi`
 
 libades_a-mt.o: src/ades/mt.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -MT libades_a-mt.o -MD -MP -MF $(DEPDIR)/libades_a-mt.Tpo -c -o libades_a-mt.o `test -f 'src/ades/mt.c' || echo '$(srcdir)/'`src/ades/mt.c
@@ -576,6 +606,20 @@ libades_a-xs.obj: src/ades/xs.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/ades/xs.c' object='libades_a-xs.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libades_a_CFLAGS) $(CFLAGS) -c -o libades_a-xs.obj `if test -f 'src/ades/xs.c'; then $(CYGPATH_W) 'src/ades/xs.c'; else $(CYGPATH_W) '$(srcdir)/src/ades/xs.c'; fi`
+
+mx-mx.o: src/mx/mx.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mx_CFLAGS) $(CFLAGS) -MT mx-mx.o -MD -MP -MF $(DEPDIR)/mx-mx.Tpo -c -o mx-mx.o `test -f 'src/mx/mx.c' || echo '$(srcdir)/'`src/mx/mx.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/mx-mx.Tpo $(DEPDIR)/mx-mx.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/mx/mx.c' object='mx-mx.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mx_CFLAGS) $(CFLAGS) -c -o mx-mx.o `test -f 'src/mx/mx.c' || echo '$(srcdir)/'`src/mx/mx.c
+
+mx-mx.obj: src/mx/mx.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mx_CFLAGS) $(CFLAGS) -MT mx-mx.obj -MD -MP -MF $(DEPDIR)/mx-mx.Tpo -c -o mx-mx.obj `if test -f 'src/mx/mx.c'; then $(CYGPATH_W) 'src/mx/mx.c'; else $(CYGPATH_W) '$(srcdir)/src/mx/mx.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/mx-mx.Tpo $(DEPDIR)/mx-mx.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='src/mx/mx.c' object='mx-mx.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mx_CFLAGS) $(CFLAGS) -c -o mx-mx.obj `if test -f 'src/mx/mx.c'; then $(CYGPATH_W) 'src/mx/mx.c'; else $(CYGPATH_W) '$(srcdir)/src/mx/mx.c'; fi`
 
 pv-pv.o: src/pv/pv.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(pv_CFLAGS) $(CFLAGS) -MT pv-pv.o -MD -MP -MF $(DEPDIR)/pv-pv.Tpo -c -o pv-pv.o `test -f 'src/pv/pv.c' || echo '$(srcdir)/'`src/pv/pv.c
@@ -1028,6 +1072,8 @@ indent:
 	rm inc/*.h~
 	indent src/ades/*.c
 	rm src/ades/*.c~
+	indent src/mx/*.c
+	rm src/mx/*.c~
 	indent src/px/*.c
 	rm src/px/*.c~
 	indent src/pv/*.c

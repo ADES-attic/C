@@ -28,6 +28,7 @@ int error1(char *msg, char *arg);
 // not to be used from library functions.
 void errExit(int);
 
+int mt(char *fn, xmlDocPtr * pDoc);
 int pt(char *fn, xmlDocPtr * pDoc);
 int tv(xmlDocPtr doc, char *schema);
 void ts(xmlDocPtr doc, observationBatch ** obs);

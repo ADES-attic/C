@@ -15,6 +15,16 @@
 // validation.
 int readXMLFile(char *fn, observationBatch ** o, char *schema);
 
+// readMPC80File -- Read an MPC 80 column observation file, parsing it into
+// the observationBatch C struct, optionally validating.
+//
+// Argument fn must be the file name of an MPC 80 column observation file,
+// observationBatch must be a non-null pointer to an observationBatch pointer.
+// Argument schema must either be the file name of an ADES XSD file or a null
+// pointer.  If non-null, the function will validate the PSV, if null there is
+// no validation.
+int readMPC80File(char *fn, observationBatch ** o, char *schema);
+
 // readPSVFile -- Read an PSV file, parsing it into the observationBatch
 // C struct, optionally validating.
 //

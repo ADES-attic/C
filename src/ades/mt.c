@@ -70,6 +70,14 @@ _Bool mtMatchHdr()
   return !regexec(&rxHdr, line, 0, NULL, 0);
 }
 
+int mtHdrBlock() {
+  return 0;
+}
+
+int mtObsBlock() {
+  return 0;
+}
+
 // mt
 //
 int mt(char *fn, xmlDocPtr * pDoc)

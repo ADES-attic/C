@@ -1,8 +1,10 @@
+/mx
 /px
 /pv
 /xv
 /xp
 libades.a
+*.obs
 *.psv
 *.PSV
 *.xml
