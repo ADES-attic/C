@@ -1,4 +1,4 @@
-dist_doc_DATA = readme.md
+dist_doc_DATA = readme.md telescopes.csv
 
 lib_LIBRARIES = libades.a
 include_HEADERS = inc/ades.h inc/ds.h
