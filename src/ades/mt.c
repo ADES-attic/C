@@ -17,6 +17,15 @@
 FILE *fobs;
 regex_t rxHdr;
 _Bool rxHdrCompiled;
+regex_t rxTel;
+_Bool rxTelCompiled;
+regex_t rxPermMP;
+regex_t rxPermComet;
+regex_t rxPermNatSat;
+regex_t rxProvMP;
+regex_t rxProvCometNatSat;
+regex_t rxCometLetter;
+_Bool rxDesigCompiled;
 
 xmlNodePtr contactNode;
 xmlNodePtr observersNode;
@@ -78,14 +87,6 @@ int mtGetLine()
 
 _Bool mtMatchHdr()
 {
-  if (!rxHdrCompiled) {
-    int r = regcomp(&rxHdr, "^[A-Z]{2}[A-Z2] ", REG_EXTENDED | REG_NOSUB);
-    if (r) {
-      regerror(r, &rxHdr, errLine, sizeof errLine);
-      exit(-1);
-    }
-    rxHdrCompiled = 1;
-  }
   return !regexec(&rxHdr, line, 0, NULL, 0);
 }
 
@@ -213,19 +214,21 @@ void mtDesign(char *design, xmlNodePtr tel)
 int mtTEL(char *val, xmlNodePtr ctx)
 {
   xmlNodePtr tel = newChild(ctx, "telescope", NULL);
-  regex_t rxTel;
-  int r = regcomp(&rxTel, "^\
+  if (!rxTelCompiled) {
+    int r = regcomp(&rxTel, "^\
 ([.0-9]+)-m \
 (f/([.0-9]+) )?\
 ([0-9A-Za-z][0-9A-Za-z -]*[0-9A-Za-z])\
 ( [+]( ([0-9]+K?)(x([0-9]+K?))?)? CCD)?\
 $", REG_EXTENDED);
-  if (r) {
-    regerror(r, &rxHdr, errLine, sizeof errLine);
-    exit(-1);
+    if (r) {
+      regerror(r, &rxHdr, errLine, sizeof errLine);
+      return -1;
+    }
+    rxTelCompiled = 1;
   }
   regmatch_t sub[10];
-  if (r = regexec(&rxTel, val, 10, sub, 0)) {
+  if (regexec(&rxTel, val, 10, sub, 0)) {
     // no match, just add everything as design.
     newChild(tel, "design", val);
     return 0;
@@ -274,7 +277,8 @@ int mtBND(char *val)
   return 0;
 }
 
-int mtCOM(char *val) {
+int mtCOM(char *val)
+{
   if (com)
     asprintf(&com, "%s, %s", com, val);
   else
@@ -289,14 +293,16 @@ int mtNUM(char *val, xmlNodePtr ctx)
   return 0;
 }
 
-int mtACK(char *val, xmlNodePtr ctx) {
+int mtACK(char *val, xmlNodePtr ctx)
+{
   if (!contactNode)
     contactNode = newChild(ctx, "contact", NULL);
   newChild(contactNode, "ackMessage", val);
   return 0;
 }
 
-int mtAC2(char *val) {
+int mtAC2(char *val)
+{
   if (ackEmail)
     asprintf(&ackEmail, "%s,%s", ackEmail, val);
   else
@@ -366,11 +372,209 @@ int mtHdrBlock()
   return 0;
 }
 
+// copy a field of size `len` from `line`, starting at `start`,
+// trimming leading and trailing space.
+// the result in buf will be null terminated.
+void copyTrim(int start, int len, char buf[len + 1])
+{
+  char *fld = line + start;
+  char *p = fld;
+  while (*p == ' ')
+    if (++p == fld + len) {
+      *buf = 0;
+      return;
+    }
+  int c = fld + len - p;
+  memcpy(buf, p, c);
+  do
+    buf[c] = 0;
+  while (c > 0 && buf[--c] == ' ');
+}
+
+char *b62 = "0123456789\
+ABCDEFGHIJKLMNOPQRSTUVWXYZ\
+abcdefghijklmnopqrstuvwxyz";
+
+int mtUnpackYear(char *p)
+{
+  return (*p - 'K' + 20) * 100 + (p[1] - '0') * 10 + p[2] - '0';
+}
+
+// p must be 5 character null terminated string.  formats into line2 and
+// returns pointer to line2.
+char *mtFormatUnpackPermMP(char *p)
+{
+  sprintf(line2, "%d", (strchr(b62, *p) - b62) * 10000 + atoi(p + 1));
+  return line2;
+}
+
+int mtDesigMP(xmlNodePtr obs)
+{
+  int e = 0;
+  char buf[6];
+  memcpy(buf, line, 5);
+  buf[5] = 0;
+  if (!strcmp(buf, "     ")) ;  // common case, just prov des, no perm des
+  else if (!regexec(&rxPermMP, buf, 0, NULL, 0)) {
+    // it's a valid perm.  unpack, reformat, add.
+    newChild(obs, "permID", mtFormatUnpackPermMP(buf));
+  } else if (!regexec(&rxCometLetter, buf, 0, NULL, 0)) {
+    // comet indicator on mp designation, just add prefix
+    e = sprintf(line2, "%c/", buf[4]);
+  } else if (!regexec(&rxPermComet, buf, 0, NULL, 0)) {
+    // valid comet perm
+    buf[4] = 0;
+    sprintf(line2, "%dP", atoi(buf));
+    newChild(obs, "permID", line2);
+    strcpy(line2, "P/");
+    e = 2;
+  } else {                      // something crazy in perm field, trim and add it as trkSub
+    copyTrim(0, 5, line2);
+    newChild(obs, "trkSub", line2);
+  }
+
+  // in any case, there's still a prov des, perhaps with a prefix already
+  // in line2.
+  char *prov = line + 5;
+  if (prov[2] == 'S') {
+    // it's a historical survey designation
+    memcpy(line2 + e, prov + 3, 4);
+    sprintf(line2 + e + 4, " %c-%c", prov[0], prov[1]);
+  } else {
+    e += sprintf(line2 + e, "%d %c%c", mtUnpackYear(prov), prov[3], prov[6]);
+    int cycle = (strchr(b62, prov[4]) - b62) * 10 + prov[5] - '0';
+    if (cycle)
+      sprintf(line2 + e, "%d", cycle);
+  }
+  newChild(obs, "provID", line2);
+  return 0;
+}
+
+int mtDesigPermMP(xmlNodePtr obs)
+{
+  char buf[6];
+  memcpy(buf, line, 5);
+  buf[5] = 0;
+  newChild(obs, "permID", mtFormatUnpackPermMP(buf));
+  return 0;
+}
+
+// columns 0-11, desig = permID, provID, trkSub.
+int mtDesig(xmlNodePtr obs)
+{
+  char buf[13];
+
+  // consider prov des field first
+  strncpy(buf, line + 5, 7);
+  buf[7] = 0;
+
+  if (!regexec(&rxProvMP, buf, 0, NULL, 0))
+    return mtDesigMP(obs);
+/*
+  if (!regexec(&rxProvCometNatSat, buf, 0, NULL, 0))
+    return mtDesigCometNatSat(obs);
+*/
+  // no match yet, consider perm des field
+  memcpy(buf, line, 5);
+  buf[5] = 0;
+  if (!regexec(&rxPermMP, buf, 0, NULL, 0))
+    return mtDesigPermMP(obs);
+/*
+  if (!regexec(&rxPermComet, buf, 0, NULL, 0))
+    return mtDesigPermComet(obs);
+
+  if (!regexec(&rxPermNatSat, buf, 0, NULL, 0))
+    return mtDesigPermNatSat(obs);
+*/
+  // no perm match either, take any non-blank from the 12 columns as trkSub
+  copyTrim(0, 12, buf);
+  if (*buf)
+    newChild(obs, "trkSub", buf);
+  return 0;
+}
+
+int mtObsCCD(xmlNodePtr obs)
+{
+  printf("mtObsCCD\n");
+  obs = newChild(obs, "optical", NULL);
+  int r;
+  if (r = mtDesig(obs))
+    return r;
+}
+
+// compile rx for designation formats
+//
+// packed formats of:
+//  perm comet
+//  prov mp
+//  prov comet
+//  prov nat sat
+// per http://www.minorplanetcenter.net/iau/info/PackedDes.html
+//
+// no known documentation on perm mp, perm nat sat
+int mtCompileDesig()
+{
+  int r;
+
+  if (r = regcomp(&rxPermMP, "^[0-9A-Za-z][0-9]{4}$", REG_EXTENDED)) {
+    regerror(r, &rxPermComet, errLine, sizeof errLine);
+    return -1;
+  }
+
+  if (r = regcomp(&rxPermComet, "^[0-9]{4}P$", REG_EXTENDED)) {
+    regerror(r, &rxPermComet, errLine, sizeof errLine);
+    return -1;
+  }
+
+  if (r = regcomp(&rxCometLetter, "^ {4}[CPDXA]$", REG_EXTENDED)) {
+    regerror(r, &rxCometLetter, errLine, sizeof errLine);
+    return -1;
+  }
+
+  if (r = regcomp(&rxPermNatSat, "^[JSUN][0-9]{3}S$", REG_EXTENDED)) {
+    regerror(r, &rxPermComet, errLine, sizeof errLine);
+    return -1;
+  }
+
+  if (r = regcomp(&rxProvMP, "^\
+([IJK][0-9]{2}[A-HJ-Y][0-9A-Za-z][0-9][A-HJ-Z])|\
+((PL|T1|T2|T3)S[0-9]{4})\
+$", REG_EXTENDED)) {
+    regerror(r, &rxProvMP, errLine, sizeof errLine);
+    return -1;
+  }
+
+  if (r = regcomp(&rxProvCometNatSat, "^\
+[IJK][0-9]{2}[A-HJ-Y][0-9A-Za-z][0-9][0a-z]\
+$", REG_EXTENDED)) {
+    regerror(r, &rxProvCometNatSat, errLine, sizeof errLine);
+    return -1;
+  }
+
+  rxDesigCompiled = 1;
+  return 0;
+}
+
 int mtObsBlock()
 {
+  if (!rxDesigCompiled)
+    mtCompileDesig();
+
+  xmlNodePtr obs = newChild(root_node, "observations", NULL);
+  int r;
   do {
-    int r = mtGetLine();
+    if (strlen(line) != 80)
+      return mtFileError("line not 80 columns");
+    switch (line[14]) {
+    case 'C':
+      r = mtObsCCD(obs);
+      break;
+    default:
+      r = mtFileError("column 15 unimplemented or invalid observation mode");
+    }
     if (r)
+      return r;
+    if (r = mtGetLine())
       return r;
   }
   while (*line);
@@ -395,6 +599,15 @@ int mt(char *fn, xmlDocPtr * pDoc)
   root_node = xmlNewNode(NULL, "observationBatch");
   root_node->line = 1;
   xmlDocSetRootElement(doc, root_node);
+
+  if (!rxHdrCompiled) {
+    int r = regcomp(&rxHdr, "^[A-Z]{2}[A-Z2] ", REG_EXTENDED | REG_NOSUB);
+    if (r) {
+      regerror(r, &rxHdr, errLine, sizeof errLine);
+      return -1;
+    }
+    rxHdrCompiled = 1;
+  }
 
   if (!mtMatchHdr())
     goto obsBlock;
