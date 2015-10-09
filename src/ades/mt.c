@@ -22,9 +22,11 @@ _Bool rxTelCompiled;
 regex_t rxPermMP;
 regex_t rxPermComet;
 regex_t rxPermNatSat;
+regex_t rxProvAny;
 regex_t rxProvMP;
-regex_t rxProvCometNatSat;
+regex_t rxProvComet;
 regex_t rxCometLetter;
+regex_t rxCometFragment;
 _Bool rxDesigCompiled;
 
 xmlNodePtr contactNode;
@@ -408,54 +410,155 @@ char *mtFormatUnpackPermMP(char *p)
   return line2;
 }
 
-int mtDesigMP(xmlNodePtr obs)
+// formats prov field of line to offset e of line2,
+// returns pointer to line2.
+char *mtFormatUnpackProvMP(int e)
+{
+  char *p = line + 5;
+  e += sprintf(line2 + e, "%d %c%c", mtUnpackYear(p), p[3], p[6]);
+  int cycle = (strchr(b62, p[4]) - b62) * 10 + p[5] - '0';
+  if (cycle)
+    sprintf(line2 + e, "%d", cycle);
+  return line2;
+}
+
+int mtDesigPermMP(xmlNodePtr obs)
+{
+  char buf[8];                  // enough for prov,
+  memcpy(buf, line, 5);         // but just copy perm at first
+  buf[5] = 0;
+  newChild(obs, "permID", mtFormatUnpackPermMP(buf));
+
+  // also handle anything in prov field
+  if (!memcmp(line + 5, "       ", 7))
+    return 0;
+
+  // see if prov field has valid mp des
+  memcpy(buf, line + 5, 7);
+  buf[7] = 0;
+  if (!regexec(&rxProvMP, buf, 0, NULL, 0)) {
+    newChild(obs, "provID", mtFormatUnpackProvMP(0));
+    return 0;
+  }
+  // add anything else as trkSub
+  copyTrim(5, 7, buf);
+  newChild(obs, "trkSub", buf);
+  return 0;
+}
+
+int mtDesigProvMP(xmlNodePtr obs)
 {
   int e = 0;
   char buf[6];
   memcpy(buf, line, 5);
   buf[5] = 0;
-  if (!strcmp(buf, "     ")) ;  // common case, just prov des, no perm des
-  else if (!regexec(&rxPermMP, buf, 0, NULL, 0)) {
-    // it's a valid perm.  unpack, reformat, add.
-    newChild(obs, "permID", mtFormatUnpackPermMP(buf));
-  } else if (!regexec(&rxCometLetter, buf, 0, NULL, 0)) {
-    // comet indicator on mp designation, just add prefix
+  if (!strcmp(buf, "     ")) ;  // common case, just prov des, perm field blank
+  else if (!regexec(&rxCometLetter, buf, 0, NULL, 0)) {
+    // comet indicator on mp designation, add prefix
     e = sprintf(line2, "%c/", buf[4]);
-  } else if (!regexec(&rxPermComet, buf, 0, NULL, 0)) {
-    // valid comet perm
-    buf[4] = 0;
-    sprintf(line2, "%dP", atoi(buf));
-    newChild(obs, "permID", line2);
-    strcpy(line2, "P/");
-    e = 2;
-  } else {                      // something crazy in perm field, trim and add it as trkSub
+  } else {
+    // something crazy in perm field, trim and add it as trkSub
     copyTrim(0, 5, line2);
     newChild(obs, "trkSub", line2);
   }
 
-  // in any case, there's still a prov des, perhaps with a prefix already
+  // in any case, now there's a prov des, perhaps with a prefix already
   // in line2.
   char *prov = line + 5;
   if (prov[2] == 'S') {
     // it's a historical survey designation
     memcpy(line2 + e, prov + 3, 4);
     sprintf(line2 + e + 4, " %c-%c", prov[0], prov[1]);
-  } else {
-    e += sprintf(line2 + e, "%d %c%c", mtUnpackYear(prov), prov[3], prov[6]);
-    int cycle = (strchr(b62, prov[4]) - b62) * 10 + prov[5] - '0';
-    if (cycle)
-      sprintf(line2 + e, "%d", cycle);
-  }
+  } else
+    mtFormatUnpackProvMP(e);
   newChild(obs, "provID", line2);
   return 0;
 }
 
-int mtDesigPermMP(xmlNodePtr obs)
+// formats prov field of line to offset e of line2,
+// returns pointer to line2.
+char *mtFormatUnpackProvComet(int e)
 {
-  char buf[6];
-  memcpy(buf, line, 5);
+  char frag = 0;
+  char *p = line + 5;
+  e += sprintf(line2 + e, "%d %c", mtUnpackYear(p), p[3]);
+  if (p[6] == '0') ;
+  // A-Y are the 25 valid mp "order within half month" letters
+  else if (strchr("ABCDEFGHIJKLMNOPQRSTUVWXY", p[6]))
+    line2[e++] = p[6];
+  else                          // rx leaves only lower case letter
+    frag = p[6];
+  e += sprintf(line2 + e, "%d", (strchr(b62, p[4]) - b62) * 10 + p[5] - '0');
+  if (frag)
+    sprintf(line2 + e, "-%c", frag - 32);
+  return line2;
+}
+
+int mtDesigPermComet(xmlNodePtr obs)
+{
+  char buf[8];                  // enough for prov,
+  memcpy(buf, line, 5);         // but just copy perm at first
   buf[5] = 0;
-  newChild(obs, "permID", mtFormatUnpackPermMP(buf));
+  int e = sprintf(line2, "%dP", atoi(buf + 1));
+
+  // perm formatted into line2 now, not added yet
+
+  // simplest case, prov field blank
+  if (!memcmp(line + 5, "       ", 7)) {
+    newChild(obs, "permID", line2);
+    return 0;
+  }
+  // check for fragment, no prov
+  memcpy(buf, line + 5, 7);
+  buf[7] = 0;
+  regmatch_t sub[2];
+  if (!regexec(&rxCometFragment, buf, 2, sub, 0)) {
+    for (int i = sub[1].rm_so; i < sub[1].rm_eo; i++) {
+      buf[i] -= 32;
+      sprintf(line2 + e, "-%s", buf + sub[1].rm_so);
+    }
+    newChild(obs, "permID", line2);
+    return 0;
+  }
+  // see if prov field has a full valid prov des
+  if (!regexec(&rxProvAny, buf, 0, NULL, 0)) {
+    // it does, but perm still needs to be added before using line2.
+    // tack on any single letter fragment, then add.
+    _Bool mp = 0;
+    if (buf[6] == '0') ;        // fast path
+    else if (strchr("abcdefghijklmnopqrstuvwxyz", buf[6]))
+      sprintf(line2 + e, "-%c", buf[6] - 32);
+    else {
+      // it must be an upper case letter of the mp format
+      mp = 1;
+    }
+    newChild(obs, "permID", line2);
+
+    // all clear, now do prov des
+    strcpy(line2, "P/");
+    newChild(obs, "provID",
+             mp ? mtFormatUnpackProvMP(2) : mtFormatUnpackProvComet(2));
+    return 0;
+  }
+  // otherwise add anything else as trkSub
+  copyTrim(5, 7, buf);
+  newChild(obs, "trkSub", buf);
+  return 0;
+}
+
+int mtDesigProvComet(xmlNodePtr obs)
+{
+  int e = 0;
+  int scrap = 5;
+  if (strchr("CPXDA", line[4])) {
+    e = sprintf(line2, "%c/", line[4]);
+    scrap--;
+  }
+  newChild(obs, "provID", mtFormatUnpackProvComet(e));
+  if (memcmp(line, "     ", scrap)) {
+    copyTrim(0, scrap, line2);
+    newChild(obs, "trkSub", line2);
+  }
   return 0;
 }
 
@@ -463,30 +566,27 @@ int mtDesigPermMP(xmlNodePtr obs)
 int mtDesig(xmlNodePtr obs)
 {
   char buf[13];
-
-  // consider prov des field first
-  strncpy(buf, line + 5, 7);
-  buf[7] = 0;
-
-  if (!regexec(&rxProvMP, buf, 0, NULL, 0))
-    return mtDesigMP(obs);
-/*
-  if (!regexec(&rxProvCometNatSat, buf, 0, NULL, 0))
-    return mtDesigCometNatSat(obs);
-*/
-  // no match yet, consider perm des field
+  // consider perm des field first.
   memcpy(buf, line, 5);
   buf[5] = 0;
   if (!regexec(&rxPermMP, buf, 0, NULL, 0))
     return mtDesigPermMP(obs);
-/*
   if (!regexec(&rxPermComet, buf, 0, NULL, 0))
     return mtDesigPermComet(obs);
-
+/*
   if (!regexec(&rxPermNatSat, buf, 0, NULL, 0))
     return mtDesigPermNatSat(obs);
 */
-  // no perm match either, take any non-blank from the 12 columns as trkSub
+
+  // no valid perm, consider prov field
+  memcpy(buf, line + 5, 7);
+  buf[7] = 0;
+  if (!regexec(&rxProvMP, buf, 0, NULL, 0))
+    return mtDesigProvMP(obs);
+  if (!regexec(&rxProvComet, buf, 0, NULL, 0))
+    return mtDesigProvComet(obs);
+
+  // no perm or prov match, take any non-blank from the 12 columns as trkSub
   copyTrim(0, 12, buf);
   if (*buf)
     newChild(obs, "trkSub", buf);
@@ -517,7 +617,7 @@ int mtCompileDesig()
   int r;
 
   if (r = regcomp(&rxPermMP, "^[0-9A-Za-z][0-9]{4}$", REG_EXTENDED)) {
-    regerror(r, &rxPermComet, errLine, sizeof errLine);
+    regerror(r, &rxPermMP, errLine, sizeof errLine);
     return -1;
   }
 
@@ -525,14 +625,22 @@ int mtCompileDesig()
     regerror(r, &rxPermComet, errLine, sizeof errLine);
     return -1;
   }
-
+  // rxCometLetter matches the case where the perm field is blank except
+  // for a comet indicating letter.
   if (r = regcomp(&rxCometLetter, "^ {4}[CPDXA]$", REG_EXTENDED)) {
     regerror(r, &rxCometLetter, errLine, sizeof errLine);
     return -1;
   }
+  // rxCometFragment matches the case where the prov field is blank except
+  // for a fragment.  match against the prov field after the perm
+  // field is found to contain a permanent comet designation.
+  if (r = regcomp(&rxCometFragment, "^ +([a-z]{1,2})$", REG_EXTENDED)) {
+    regerror(r, &rxCometFragment, errLine, sizeof errLine);
+    return -1;
+  }
 
   if (r = regcomp(&rxPermNatSat, "^[JSUN][0-9]{3}S$", REG_EXTENDED)) {
-    regerror(r, &rxPermComet, errLine, sizeof errLine);
+    regerror(r, &rxPermNatSat, errLine, sizeof errLine);
     return -1;
   }
 
@@ -544,10 +652,17 @@ $", REG_EXTENDED)) {
     return -1;
   }
 
-  if (r = regcomp(&rxProvCometNatSat, "^\
+  if (r = regcomp(&rxProvComet, "^\
 [IJK][0-9]{2}[A-HJ-Y][0-9A-Za-z][0-9][0a-z]\
 $", REG_EXTENDED)) {
-    regerror(r, &rxProvCometNatSat, errLine, sizeof errLine);
+    regerror(r, &rxProvComet, errLine, sizeof errLine);
+    return -1;
+  }
+
+  if (r = regcomp(&rxProvAny, "^\
+[IJK][0-9]{2}[A-HJ-Y][0-9A-Za-z][0-9][0a-zA-HJ-Z]\
+$", REG_EXTENDED)) {
+    regerror(r, &rxProvAny, errLine, sizeof errLine);
     return -1;
   }
 
@@ -557,8 +672,11 @@ $", REG_EXTENDED)) {
 
 int mtObsBlock()
 {
-  if (!rxDesigCompiled)
-    mtCompileDesig();
+  if (!rxDesigCompiled) {
+    int r = mtCompileDesig();
+    if (r)
+      return r;
+  }
 
   xmlNodePtr obs = newChild(root_node, "observations", NULL);
   int r;
