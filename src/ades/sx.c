@@ -218,7 +218,8 @@ int addObsList(obsList * ol)
 
     for (int fld = F_PERMID; fld < F_NUM; fld++)
       if (rec[0][fld])
-        xmlNewChild(xRec, NULL, fldNames[fld], rec[0][fld]);
+        xmlNewChild(xRec, NULL, fldNames[fld],
+                    xmlEncodeEntitiesReentrant(doc, rec[0][fld]));
   }
   return 0;
 }
