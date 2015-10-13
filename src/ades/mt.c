@@ -25,6 +25,7 @@ regex_t rxPermNatSat;
 regex_t rxProvAny;
 regex_t rxProvMP;
 regex_t rxProvComet;
+regex_t rxProvNatSat;
 regex_t rxCometLetter;
 regex_t rxCometFragment;
 _Bool rxDesigCompiled;
@@ -562,6 +563,54 @@ int mtDesigProvComet(xmlNodePtr obs)
   return 0;
 }
 
+// formats prov field of line to offset e of line2,
+// returns pointer to line2.
+char *mtFormatUnpackProvNatSat(int e)
+{
+  char frag = 0;
+  char *p = line + 5;
+  sprintf(line2, "S/%d %c %d",
+    mtUnpackYear(p), p[3], (strchr(b62, p[4]) - b62) * 10 + p[5] - '0');
+  return line2;
+}
+
+int mtDesigPermNatSat(xmlNodePtr obs)
+{
+  char buf[8];      
+  memcpy(buf, line, 4);         // fifth char is S, don't copy it.
+  buf[4] = 0;
+  int e = sprintf(line2, "%c%d", *buf, atoi(buf + 1));
+  newChild(obs, "permID", line2);
+
+  // fast path, prov field blank
+  if (!memcmp(line + 5, "       ", 7)) {
+    return 0;
+  }
+  // see if prov field has a full valid nat sat prov des
+  memcpy(buf, line+5, 7);
+  buf[7] = 0;
+  if (!regexec(&rxProvNatSat, buf, 0, NULL, 0)) {
+    newChild(obs, "provID", mtFormatUnpackProvNatSat(0));
+    return 0;
+  }
+  // otherwise add anything else as trkSub
+  copyTrim(5, 7, buf);
+  newChild(obs, "trkSub", buf);
+  return 0;
+}
+
+int mtDesigProvNatSat(xmlNodePtr obs)
+{
+  newChild(obs, "provID", mtFormatUnpackProvNatSat(0));
+
+  if (memcmp(line, "    ", 4)) {
+    copyTrim(0, 4, line2);
+    newChild(obs, "trkSub", line2);
+  }
+  return 0;
+}
+
+
 // columns 0-11, desig = permID, provID, trkSub.
 int mtDesig(xmlNodePtr obs)
 {
@@ -573,16 +622,16 @@ int mtDesig(xmlNodePtr obs)
     return mtDesigPermMP(obs);
   if (!regexec(&rxPermComet, buf, 0, NULL, 0))
     return mtDesigPermComet(obs);
-/*
   if (!regexec(&rxPermNatSat, buf, 0, NULL, 0))
     return mtDesigPermNatSat(obs);
-*/
 
   // no valid perm, consider prov field
   memcpy(buf, line + 5, 7);
   buf[7] = 0;
   if (!regexec(&rxProvMP, buf, 0, NULL, 0))
     return mtDesigProvMP(obs);
+  if (line[4] == 'S' && !regexec(&rxProvNatSat, buf, 0, NULL, 0))
+    return mtDesigProvNatSat(obs);
   if (!regexec(&rxProvComet, buf, 0, NULL, 0))
     return mtDesigProvComet(obs);
 
@@ -595,7 +644,6 @@ int mtDesig(xmlNodePtr obs)
 
 int mtObsCCD(xmlNodePtr obs)
 {
-  printf("mtObsCCD\n");
   obs = newChild(obs, "optical", NULL);
   int r;
   if (r = mtDesig(obs))
@@ -656,6 +704,13 @@ $", REG_EXTENDED)) {
 [IJK][0-9]{2}[A-HJ-Y][0-9A-Za-z][0-9][0a-z]\
 $", REG_EXTENDED)) {
     regerror(r, &rxProvComet, errLine, sizeof errLine);
+    return -1;
+  }
+
+  if (r = regcomp(&rxProvNatSat, "^\
+[IJK][0-9]{2}[JSUN][0-9A-Za-z][0-9]0\
+$", REG_EXTENDED)) {
+    regerror(r, &rxProvNatSat, errLine, sizeof errLine);
     return -1;
   }
 
