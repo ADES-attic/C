@@ -375,6 +375,12 @@ int mtHdrBlock()
   return 0;
 }
 
+enum {
+  DT_MP,
+  DT_Comet,
+  DT_NatSat,
+};
+
 // copy a field of size `len` from `line`, starting at `start`,
 // trimming leading and trailing space.
 // the result in buf will be null terminated.
@@ -447,7 +453,7 @@ int mtDesigPermMP(xmlNodePtr obs)
   return 0;
 }
 
-int mtDesigProvMP(xmlNodePtr obs)
+int mtDesigProvMP(xmlNodePtr obs, int *desType)
 {
   int e = 0;
   char buf[6];
@@ -457,6 +463,7 @@ int mtDesigProvMP(xmlNodePtr obs)
   else if (!regexec(&rxCometLetter, buf, 0, NULL, 0)) {
     // comet indicator on mp designation, add prefix
     e = sprintf(line2, "%c/", buf[4]);
+    *desType = DT_Comet;
   } else {
     // something crazy in perm field, trim and add it as trkSub
     copyTrim(0, 5, line2);
@@ -570,13 +577,13 @@ char *mtFormatUnpackProvNatSat(int e)
   char frag = 0;
   char *p = line + 5;
   sprintf(line2, "S/%d %c %d",
-    mtUnpackYear(p), p[3], (strchr(b62, p[4]) - b62) * 10 + p[5] - '0');
+          mtUnpackYear(p), p[3], (strchr(b62, p[4]) - b62) * 10 + p[5] - '0');
   return line2;
 }
 
 int mtDesigPermNatSat(xmlNodePtr obs)
 {
-  char buf[8];      
+  char buf[8];
   memcpy(buf, line, 4);         // fifth char is S, don't copy it.
   buf[4] = 0;
   int e = sprintf(line2, "%c%d", *buf, atoi(buf + 1));
@@ -587,7 +594,7 @@ int mtDesigPermNatSat(xmlNodePtr obs)
     return 0;
   }
   // see if prov field has a full valid nat sat prov des
-  memcpy(buf, line+5, 7);
+  memcpy(buf, line + 5, 7);
   buf[7] = 0;
   if (!regexec(&rxProvNatSat, buf, 0, NULL, 0)) {
     newChild(obs, "provID", mtFormatUnpackProvNatSat(0));
@@ -610,44 +617,108 @@ int mtDesigProvNatSat(xmlNodePtr obs)
   return 0;
 }
 
-
 // columns 0-11, desig = permID, provID, trkSub.
-int mtDesig(xmlNodePtr obs)
+int mtDesig(xmlNodePtr obs, int *desType)
 {
+  *desType = DT_MP;
   char buf[13];
   // consider perm des field first.
   memcpy(buf, line, 5);
   buf[5] = 0;
   if (!regexec(&rxPermMP, buf, 0, NULL, 0))
     return mtDesigPermMP(obs);
-  if (!regexec(&rxPermComet, buf, 0, NULL, 0))
+  if (!regexec(&rxPermComet, buf, 0, NULL, 0)) {
+    *desType = DT_Comet;
     return mtDesigPermComet(obs);
-  if (!regexec(&rxPermNatSat, buf, 0, NULL, 0))
+  }
+  if (!regexec(&rxPermNatSat, buf, 0, NULL, 0)) {
+    *desType = DT_NatSat;
     return mtDesigPermNatSat(obs);
-
+  }
   // no valid perm, consider prov field
   memcpy(buf, line + 5, 7);
   buf[7] = 0;
   if (!regexec(&rxProvMP, buf, 0, NULL, 0))
-    return mtDesigProvMP(obs);
-  if (line[4] == 'S' && !regexec(&rxProvNatSat, buf, 0, NULL, 0))
+    return mtDesigProvMP(obs, desType);
+  if (line[4] == 'S' && !regexec(&rxProvNatSat, buf, 0, NULL, 0)) {
+    *desType = DT_NatSat;
     return mtDesigProvNatSat(obs);
-  if (!regexec(&rxProvComet, buf, 0, NULL, 0))
+  }
+  if (!regexec(&rxProvComet, buf, 0, NULL, 0)) {
+    *desType = DT_Comet;
     return mtDesigProvComet(obs);
-
+  }
   // no perm or prov match, take any non-blank from the 12 columns as trkSub
   copyTrim(0, 12, buf);
   if (*buf)
     newChild(obs, "trkSub", buf);
+  desType = DT_MP;
   return 0;
+}
+
+void addPCNote(xmlNodePtr obs)
+{
+  char cc[5];
+  memcpy(cc, line + 77, 3);
+  cc[3] = line[13];
+  cc[4] = 0;
+
+  FILE *f = fopen("program_codes.txt", "r");
+  if (!f)
+    goto noPC;
+  struct stat st;
+  if (fstat(fileno(f), &st))
+    goto noPC;
+  char *buf = malloc(st.st_size + 1);
+  fread(buf, st.st_size, 1, f);
+  buf[st.st_size] = 0;
+  fclose(f);
+
+  char *p = strstr(buf, cc);
+  if (!p)
+    goto noPC;
+  if (p != buf && p[-1] != '\n') // must start at beginning of line
+    goto noPC;
+  if (p[4] != ' ')              // must end at space
+    goto noPC;
+  // matched obs code and prog code, prog num follows
+  p += 5;
+  char *q = strchr(p, '\n');
+  if (q)
+    *q = 0;
+  newChild(obs, "prg", p);
+  return;
+
+ noPC:
+  newChild(obs, "notes", xmlEncodeEntitiesReentrant(doc, cc + 3));
 }
 
 int mtObsCCD(xmlNodePtr obs)
 {
   obs = newChild(obs, "optical", NULL);
-  int r;
-  if (r = mtDesig(obs))
+
+  // cols 0-11, parse designation, also returning designation type
+  int r, desType;
+  if (r = mtDesig(obs, &desType))
     return r;
+
+  // col 12, discovery
+  if (line[12] != ' ' && desType == DT_MP) {
+    char d[2];
+    d[0] = line[12];
+    d[1] = 0;
+    newChild(obs, "disc", d);
+  }
+  // col 13, program code or note
+  if (line[13] != ' ')
+    addPCNote(obs);
+
+  // col 14, mode
+  if (line[14] != 'C')
+    return mtFileError("modes other than CCD unimplemented");
+
+  newChild(obs, "mode", "CCD");
+  return 0;
 }
 
 // compile rx for designation formats
