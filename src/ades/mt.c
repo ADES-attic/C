@@ -11,6 +11,7 @@
 #include <regex.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #include <globals.h>
 
@@ -28,7 +29,10 @@ regex_t rxProvComet;
 regex_t rxProvNatSat;
 regex_t rxCometLetter;
 regex_t rxCometFragment;
-_Bool rxDesigCompiled;
+regex_t rxDate;
+regex_t rxRA;
+regex_t rxDec;
+_Bool rxObsCompiled;
 
 xmlNodePtr contactNode;
 xmlNodePtr observersNode;
@@ -693,9 +697,88 @@ void addPCNote(xmlNodePtr obs)
   newChild(obs, "notes", xmlEncodeEntitiesReentrant(doc, cc + 3));
 }
 
+void addDate(char *d, xmlNodePtr obs)
+{
+  struct tm br;
+  memset(&br, sizeof br, 0);
+  d[4] = 0;
+  br.tm_year = atoi(d) - 1900;
+  d[7] = 0;
+  br.tm_mon = atoi(d + 5) - 1;  // not ordinal
+  d[10] = 0;
+  br.tm_mday = atoi(d + 8);     // ordinal
+  d[10] = '.';
+  double dm = strtod(d + 10, NULL) * 24 * 60; // day frac as minutes
+  int min = dm;
+  br.tm_hour = min / 60;
+  br.tm_min = min % 60;
+  int e = strftime(line2, sizeof line2, "%FT%H:%M:", &br);
+  dm -= min;                    // fraction of a minute
+  // there are just two possibilities for output precision.  if last digit
+  // is not given, output is tenths of seconds, otherwise it is whole seconds.
+  sprintf(line2 + e, (d[16] == ' ') ? "%02.0fZ" : "%04.1fZ", dm * 60);
+  newChild(obs, "obsTime", line2);
+
+  // precTime
+  int pt = 1;
+  for (int i = 16; d[i] == ' ' && i > 10; i--)
+    pt *= 10;
+  sprintf(line2, "%d", pt);
+  newChild(obs, "precTime", line2);
+}
+
+void addRA(char *r, xmlNodePtr obs)
+{
+  r[2] = 0;
+  int hr = atoi(r);
+  r[5] = 0;
+  int min = atoi(r + 3);
+  double sec = strtod(r + 6, NULL);
+  double deg = 15 * (hr + (min + sec / 60) / 60);
+
+  int d = 6;                    // digits for sprintf
+  double pr = .001;             // precRA
+  for (int i = 11; r[i] == ' ' && i > 8; i--) {
+    d--;
+    pr *= 10;
+  }
+
+  sprintf(line2, "%.*f", d, deg);
+  newChild(obs, "ra", line2);
+
+  sprintf(line2, "%.3g", pr);
+  newChild(obs, "precRA", line2);
+}
+
+void addDec(char *d, xmlNodePtr obs)
+{
+  d[3] = 0;
+  int deg = atoi(d + 1);
+  d[6] = 0;
+  int min = atoi(d + 4);
+  double sec = strtod(d + 7, NULL);
+  double dd = deg + (min + sec / 60) / 60;
+  if (*d == '-')
+    dd = -dd;
+
+  int p = 6;                    // precision for sprintf
+  double pr = .01;              // precDec
+  for (int i = 11; d[i] == ' ' && i > 9; i--) {
+    p--;
+    pr *= 10;
+  }
+
+  sprintf(line2, "%.*f", p, dd);
+  newChild(obs, "dec", line2);
+
+  sprintf(line2, "%.2g", pr);
+  newChild(obs, "precDec", line2);
+}
+
 int mtObsCCD(xmlNodePtr obs)
 {
   obs = newChild(obs, "optical", NULL);
+  newChild(obs, "subFmt", "M92");
 
   // cols 0-11, parse designation, also returning designation type
   int r, desType;
@@ -713,25 +796,62 @@ int mtObsCCD(xmlNodePtr obs)
   if (line[13] != ' ')
     addPCNote(obs);
 
-  // col 14, mode
-  if (line[14] != 'C')
-    return mtFileError("modes other than CCD unimplemented");
-
+  // col 14, mode already known to contain 'C'
   newChild(obs, "mode", "CCD");
+
+  {                             // cols 15-31, time
+    char d[18];
+    memcpy(d, line + 15, 17);
+    d[17] = 0;
+    if (regexec(&rxDate, d, 0, NULL, 0))
+      return mtFileError("invalid date");
+    addDate(d, obs);
+  }
+  {                             // cols 32-43, RA
+    char r[13];
+    memcpy(r, line + 32, 12);
+    r[12] = 0;
+    if (regexec(&rxRA, r, 0, NULL, 0))
+      return mtFileError("invalid RA");
+    addRA(r, obs);
+  }
+  {                             // cols 44-55, Dec
+    char d[13];
+    memcpy(d, line + 44, 12);
+    d[12] = 0;
+    if (regexec(&rxDec, d, 0, NULL, 0))
+      return mtFileError("invalid Dec");
+    addDec(d, obs);
+  }
+
+  if (memcmp(line + 56, "         ", 9))
+    return mtFileError("columns between Dec and Mag must be blank");
+
+  {                             // cols 65-69, Mag
+    copyTrim(65, 5, line2);
+    if (*line2)
+      newChild(obs, "mag", line2);
+  }
+
+  if (line[70] != ' ') {        // col 70, Band
+    line2[0] = line[70];
+    line2[1] = 0;
+    newChild(obs, "band", line2);
+  }
+
+  if (memcmp(line + 71, "      ", 6))
+    return mtFileError("columns between Band and Obscode must be blank");
+
+  {                             // cols 77-79, Obscode
+    copyTrim(77, 3, line2);
+    if (*line2)
+      newChild(obs, "stn", line2);
+  }
   return 0;
 }
 
-// compile rx for designation formats
-//
-// packed formats of:
-//  perm comet
-//  prov mp
-//  prov comet
-//  prov nat sat
-// per http://www.minorplanetcenter.net/iau/info/PackedDes.html
-//
-// no known documentation on perm mp, perm nat sat
-int mtCompileDesig()
+// compile rx for observation fields
+int mtCompileObsRx()
 {
   int r;
 
@@ -739,7 +859,6 @@ int mtCompileDesig()
     regerror(r, &rxPermMP, errLine, sizeof errLine);
     return -1;
   }
-
   if (r = regcomp(&rxPermComet, "^[0-9]{4}P$", REG_EXTENDED)) {
     regerror(r, &rxPermComet, errLine, sizeof errLine);
     return -1;
@@ -757,12 +876,10 @@ int mtCompileDesig()
     regerror(r, &rxCometFragment, errLine, sizeof errLine);
     return -1;
   }
-
   if (r = regcomp(&rxPermNatSat, "^[JSUN][0-9]{3}S$", REG_EXTENDED)) {
     regerror(r, &rxPermNatSat, errLine, sizeof errLine);
     return -1;
   }
-
   if (r = regcomp(&rxProvMP, "^\
 ([IJK][0-9]{2}[A-HJ-Y][0-9A-Za-z][0-9][A-HJ-Z])|\
 ((PL|T1|T2|T3)S[0-9]{4})\
@@ -770,36 +887,51 @@ $", REG_EXTENDED)) {
     regerror(r, &rxProvMP, errLine, sizeof errLine);
     return -1;
   }
-
   if (r = regcomp(&rxProvComet, "^\
 [IJK][0-9]{2}[A-HJ-Y][0-9A-Za-z][0-9][0a-z]\
 $", REG_EXTENDED)) {
     regerror(r, &rxProvComet, errLine, sizeof errLine);
     return -1;
   }
-
   if (r = regcomp(&rxProvNatSat, "^\
 [IJK][0-9]{2}[JSUN][0-9A-Za-z][0-9]0\
 $", REG_EXTENDED)) {
     regerror(r, &rxProvNatSat, errLine, sizeof errLine);
     return -1;
   }
-
   if (r = regcomp(&rxProvAny, "^\
 [IJK][0-9]{2}[A-HJ-Y][0-9A-Za-z][0-9][0a-zA-HJ-Z]\
 $", REG_EXTENDED)) {
     regerror(r, &rxProvAny, errLine, sizeof errLine);
     return -1;
   }
+  if (r = regcomp(&rxDate, "^\
+[12][0-9]{3} [ 01][0-9] [ 0-3][0-9](.[0-9]*)? *\
+$", REG_EXTENDED)) {
+    regerror(r, &rxDate, errLine, sizeof errLine);
+    return -1;
+  }
+  if (r = regcomp(&rxRA, "^\
+[ 012][0-9] [ 0-5][0-9] [ 0-5][0-9](.[0-9]*)? *\
+$", REG_EXTENDED)) {
+    regerror(r, &rxRA, errLine, sizeof errLine);
+    return -1;
+  }
+  if (r = regcomp(&rxDec, "^\
+[ +-][ 0-9][0-9] [ 0-5][0-9] [ 0-5][0-9](.[0-9]*)? *\
+$", REG_EXTENDED)) {
+    regerror(r, &rxDec, errLine, sizeof errLine);
+    return -1;
+  }
 
-  rxDesigCompiled = 1;
+  rxObsCompiled = 1;
   return 0;
 }
 
 int mtObsBlock()
 {
-  if (!rxDesigCompiled) {
-    int r = mtCompileDesig();
+  if (!rxObsCompiled) {
+    int r = mtCompileObsRx();
     if (r)
       return r;
   }
