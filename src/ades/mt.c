@@ -684,6 +684,10 @@ void addPCNote(xmlNodePtr obs)
   memcpy(cc, line + 77, 3);
   cc[3] = line[13];
   cc[4] = 0;
+  // invalid in obscodes, and code here must skip comment and blank lines
+  // in the .txt file
+  if (cc[0] == ' ' || cc[0] == '#')
+    goto noPC;
 
   if (!progCodeData)
     goto noPC;
@@ -789,12 +793,14 @@ void addCat(xmlNodePtr obs, _Bool mag)
   char *n = "UNK";
   if (net)
     n = net;
-  if (line[71] == ' ')
+  // space means no cat, # invalid.  (code here must skip comment lines
+  // and blank lines in file.)
+  if (line[71] == ' ' || line[71] == '#')
     goto add;
   if (!catalogData)
     goto add;
   char *c = catalogData;
-  if (*c != line[71]) {
+  if (c[0] != line[71] || c[1] != ',') {
     sprintf(line2, "\n%c,", line[71]);
     c = strstr(catalogData, line2);
     if (!c)
@@ -864,13 +870,11 @@ int mtObsCCD(xmlNodePtr obs)
   if (memcmp(line + 56, "         ", 9))
     return mtFileError("columns between Dec and Mag must be blank");
 
-  _Bool mag = 0;
-  {                             // cols 65-69, Mag
-    copyTrim(65, 5, line2);
-    if (*line2) {
-      newChild(obs, "mag", line2);
-      mag = 1;
-    }
+  _Bool mag = 0;                // cols 65-69, Mag
+  copyTrim(65, 5, line2);
+  if (*line2) {
+    newChild(obs, "mag", line2);
+    mag = 1;
   }
 
   if (line[70] != ' ') {        // col 70, Band
@@ -881,14 +885,15 @@ int mtObsCCD(xmlNodePtr obs)
 
   addCat(obs, mag);             // col 71, always add astCat
 
-  if (memcmp(line + 72, "     ", 5))
-    return mtFileError("columns between Cat and Obscode must be blank");
+  // TEST just output 5 character ref for now.  maybe expand later.
+  copyTrim(72, 5, line2);       // cols 72-76, reference
+  if (*line2)
+    newChild(obs, "ref", line2);
 
-  {                             // cols 77-79, Obscode
-    copyTrim(77, 3, line2);
-    if (*line2)
-      newChild(obs, "stn", line2);
-  }
+  copyTrim(77, 3, line2);       // cols 77-79, Obscode
+  if (*line2)
+    newChild(obs, "stn", line2);
+
   return 0;
 }
 

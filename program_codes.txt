@@ -1,3 +1,14 @@
+
+# Translation from single character program codes used in the MPC 80 column
+# format to integer codes used in the ADES.
+#
+# Format:
+# Two columns, space separated.
+# Column 1: Three character code MPC obscode concatentated with a single
+#           character program code.
+# Column 2: Integer program code used in the ADES.
+# Comment lines have # in first colum.  Blank lines okay.
+
 0101 1
 0102 2
 0103 3

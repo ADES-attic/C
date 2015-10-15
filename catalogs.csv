@@ -1,3 +1,13 @@
+
+# Translation from single character catalog codes used in the MPC 80 column
+# format to longer catalog codes used in the ADES.
+#
+# Format:
+# Two columns, comma separated.
+# Column 1: single character code, column 2: longer code.
+# Space is significant.  Quoting not supported.
+# Comment lines have # in first colum.  Blank lines okay.
+
 A,AC
 B,SAO-1984
 C,SAO
