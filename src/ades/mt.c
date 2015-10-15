@@ -34,6 +34,12 @@ regex_t rxRA;
 regex_t rxDec;
 _Bool rxObsCompiled;
 
+char *catalogData;
+char *progCodeData;
+_Bool dataFilesLoaded;
+char *telescopeData;
+_Bool telDataLoaded;
+
 xmlNodePtr contactNode;
 xmlNodePtr observersNode;
 xmlNodePtr measurersNode;
@@ -99,7 +105,8 @@ _Bool mtMatchHdr()
 
 xmlNodePtr newChild(xmlNodePtr parent, char *name, char *val)
 {
-  xmlNodePtr n = xmlNewChild(parent, NULL, name, val);
+  xmlNodePtr n =
+    xmlNewChild(parent, NULL, name, xmlEncodeEntitiesReentrant(doc, val));
   n->line = lineNum;
   return n;
 }
@@ -186,35 +193,46 @@ int mtMEA(char *val, xmlNodePtr ctx)
   return mtNameList(val, measurersNode);
 }
 
-void mtDesign(char *design, xmlNodePtr tel)
+char *loadFile(char *fn)
 {
-  FILE *f = fopen("telescopes.csv", "r");
+  FILE *f = fopen(fn, "r");
   if (!f)
-    goto des;
+    return NULL;
   struct stat st;
   if (fstat(fileno(f), &st))
-    goto des;
+    return NULL;
   char *buf = malloc(st.st_size + 1);
   fread(buf, st.st_size, 1, f);
   buf[st.st_size] = 0;
   fclose(f);
-  char *p;
-  int dl = strlen(design);
-  for (p = buf; (p = strstr(p, design)); p += dl) {
-    if (p != buf && p[-1] != '\n') // must start at beginning of line
-      continue;
-    if (p[dl] != ',')           // must end at comma
-      continue;
-    // design argument matches telescope name, actual design follows comma.
-    p += dl + 1;
-    char *q = strchr(p, '\n');
-    if (q)
-      *q = 0;
-    newChild(tel, "name", design);
-    newChild(tel, "design", p);
-    return;
+  return buf;
+}
+
+void mtDesign(char *design, xmlNodePtr tel)
+{
+  if (!telDataLoaded) {
+    telescopeData = loadFile("telescopes.csv");
+    telDataLoaded = 1;
   }
- des:
+  if (telescopeData) {
+    char *p;
+    int dl = strlen(design);
+    for (p = telescopeData; (p = strstr(p, design)); p += dl) {
+      // must start at beginning of line
+      if (!(p == telescopeData || p[-1] == '\n'))
+        continue;
+      if (p[dl] != ',')         // must end at comma
+        continue;
+      // design argument matches telescope name, actual design follows comma.
+      p += dl + 1;
+      dl = strcspn(p, "\n\r");
+      memcpy(line2, p, dl);
+      line2[dl] = 0;
+      newChild(tel, "name", design);
+      newChild(tel, "design", line2);
+      return;
+    }
+  }
   newChild(tel, "design", design);
 }
 
@@ -667,34 +685,25 @@ void addPCNote(xmlNodePtr obs)
   cc[3] = line[13];
   cc[4] = 0;
 
-  FILE *f = fopen("program_codes.txt", "r");
-  if (!f)
+  if (!progCodeData)
     goto noPC;
-  struct stat st;
-  if (fstat(fileno(f), &st))
-    goto noPC;
-  char *buf = malloc(st.st_size + 1);
-  fread(buf, st.st_size, 1, f);
-  buf[st.st_size] = 0;
-  fclose(f);
-
-  char *p = strstr(buf, cc);
+  char *p = strstr(progCodeData, cc);
   if (!p)
     goto noPC;
-  if (p != buf && p[-1] != '\n') // must start at beginning of line
+  if (p != progCodeData && p[-1] != '\n') // must start at beginning of line
     goto noPC;
   if (p[4] != ' ')              // must end at space
     goto noPC;
   // matched obs code and prog code, prog num follows
   p += 5;
-  char *q = strchr(p, '\n');
-  if (q)
-    *q = 0;
-  newChild(obs, "prg", p);
+  int cl = strcspn(p, "\n\r");
+  memcpy(line2, p, cl);
+  line2[cl] = 0;
+  newChild(obs, "prg", line2);
   return;
 
  noPC:
-  newChild(obs, "notes", xmlEncodeEntitiesReentrant(doc, cc + 3));
+  newChild(obs, "notes", cc + 3);
 }
 
 void addDate(char *d, xmlNodePtr obs)
@@ -775,6 +784,34 @@ void addDec(char *d, xmlNodePtr obs)
   newChild(obs, "precDec", line2);
 }
 
+void addCat(xmlNodePtr obs, _Bool mag)
+{
+  char *n = "UNK";
+  if (net)
+    n = net;
+  if (line[71] == ' ')
+    goto add;
+  if (!catalogData)
+    goto add;
+  char *c = catalogData;
+  if (*c != line[71]) {
+    sprintf(line2, "\n%c,", line[71]);
+    c = strstr(catalogData, line2);
+    if (!c)
+      goto add;
+    c++;
+  }
+
+  int cl = strcspn(c + 2, "\n\r");
+  memcpy(line2, c + 2, cl);
+  line2[cl] = 0;
+  n = line2;
+ add:
+  newChild(obs, "astCat", n);
+  if (mag)
+    newChild(obs, "photCat", n);
+}
+
 int mtObsCCD(xmlNodePtr obs)
 {
   obs = newChild(obs, "optical", NULL);
@@ -827,10 +864,13 @@ int mtObsCCD(xmlNodePtr obs)
   if (memcmp(line + 56, "         ", 9))
     return mtFileError("columns between Dec and Mag must be blank");
 
+  _Bool mag = 0;
   {                             // cols 65-69, Mag
     copyTrim(65, 5, line2);
-    if (*line2)
+    if (*line2) {
       newChild(obs, "mag", line2);
+      mag = 1;
+    }
   }
 
   if (line[70] != ' ') {        // col 70, Band
@@ -839,8 +879,10 @@ int mtObsCCD(xmlNodePtr obs)
     newChild(obs, "band", line2);
   }
 
-  if (memcmp(line + 71, "      ", 6))
-    return mtFileError("columns between Band and Obscode must be blank");
+  addCat(obs, mag);             // col 71, always add astCat
+
+  if (memcmp(line + 72, "     ", 5))
+    return mtFileError("columns between Cat and Obscode must be blank");
 
   {                             // cols 77-79, Obscode
     copyTrim(77, 3, line2);
@@ -934,6 +976,11 @@ int mtObsBlock()
     int r = mtCompileObsRx();
     if (r)
       return r;
+  }
+  if (!dataFilesLoaded) {
+    catalogData = loadFile("catalogs.csv");
+    progCodeData = loadFile("program_codes.txt");
+    dataFilesLoaded = 1;
   }
 
   xmlNodePtr obs = newChild(root_node, "observations", NULL);
