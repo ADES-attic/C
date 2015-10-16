@@ -1029,7 +1029,10 @@ int mt(char *fn, xmlDocPtr * pDoc)
   xmlDocSetRootElement(doc, root_node);
 
   if (!rxHdrCompiled) {
-    int r = regcomp(&rxHdr, "^[A-Z]{2}[A-Z2] ", REG_EXTENDED | REG_NOSUB);
+    // spec says space is required, but mtGetLine trims trailing space.
+    // $ allows <hdr><sp>\n after it has been trimmed to just <hdr>
+    // by mtGetLine.
+    int r = regcomp(&rxHdr, "^[A-Z]{2}[A-Z2]( |$)", REG_EXTENDED | REG_NOSUB);
     if (r) {
       regerror(r, &rxHdr, errLine, sizeof errLine);
       return -1;
