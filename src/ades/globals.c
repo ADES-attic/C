@@ -36,8 +36,12 @@ int error1(char *msg, char *arg)
 // not to be used from library functions.
 void errExit(int r)
 {
-  fputs(errLine, stderr);
-  fputc('\n', stderr);
+  if (*errLine) {
+    fputs(errLine, stderr);
+    fputc('\n', stderr);
+  } else
+    fprintf(stderr, "Fatal error %d\n.", r);
+
   exit(r);
 }
 

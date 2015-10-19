@@ -22,8 +22,9 @@ int readXMLFile(char *fn, observationBatch ** o, char *schema);
 // observationBatch must be a non-null pointer to an observationBatch pointer.
 // Argument schema must either be the file name of an ADES XSD file or a null
 // pointer.  If non-null, the function will validate the PSV, if null there is
-// no validation.
-int readMPC80File(char *fn, observationBatch ** o, char *schema);
+// no validation.  If logsnr is non-NULL, it will be added as a logSNR element
+// to each observation.
+int readMPC80File(char *fn, observationBatch ** o, char *schema, char *logsnr);
 
 // readPSVFile -- Read an PSV file, parsing it into the observationBatch
 // C struct, optionally validating.

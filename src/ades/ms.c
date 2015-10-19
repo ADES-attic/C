@@ -6,10 +6,10 @@
 #include <ades.h>
 #include <globals.h>
 
-int readMPC80File(char *fn, observationBatch ** obs, char *schema)
+int readMPC80File(char *fn, observationBatch ** obs, char *schema, char *logsnr)
 {
   xmlDocPtr doc;
-  int r = mt(fn, &doc);
+  int r = mt(fn, &doc, logsnr);
   if (r)
     return r;
   // printf("read okay\n");

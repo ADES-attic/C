@@ -40,9 +40,11 @@ _Bool dataFilesLoaded;
 char *telescopeData;
 _Bool telDataLoaded;
 
+xmlNodePtr ctxNode;
 xmlNodePtr contactNode;
 xmlNodePtr observersNode;
 xmlNodePtr measurersNode;
+_Bool observationCountSet;
 _Bool contactNameSet;
 char *contactAddress;
 char *ackEmail;
@@ -111,17 +113,17 @@ xmlNodePtr newChild(xmlNodePtr parent, char *name, char *val)
   return n;
 }
 
-int mtCOD(char *val, xmlNodePtr ctx)
+int mtCOD(char *val)
 {
-  xmlNodePtr obs = newChild(ctx, "observatory", NULL);
+  xmlNodePtr obs = newChild(ctxNode, "observatory", NULL);
   newChild(obs, "mpcCode", val);
   return 0;
 }
 
-int mtCON(char *val, xmlNodePtr ctx)
+int mtCON(char *val)
 {
   if (!contactNode)
-    contactNode = newChild(ctx, "contact", NULL);
+    contactNode = newChild(ctxNode, "contact", NULL);
 
   char *lb, *rb;
   if ((lb = strchr(val, '[')) && (rb = strchr(lb, ']'))) {
@@ -179,17 +181,17 @@ int mtNameList(char *val, xmlNodePtr parent)
   return 0;
 }
 
-int mtOBS(char *val, xmlNodePtr ctx)
+int mtOBS(char *val)
 {
   if (!observersNode)
-    observersNode = newChild(ctx, "observers", NULL);
+    observersNode = newChild(ctxNode, "observers", NULL);
   return mtNameList(val, observersNode);
 }
 
-int mtMEA(char *val, xmlNodePtr ctx)
+int mtMEA(char *val)
 {
   if (!measurersNode)
-    measurersNode = newChild(ctx, "measurers", NULL);
+    measurersNode = newChild(ctxNode, "measurers", NULL);
   return mtNameList(val, measurersNode);
 }
 
@@ -236,9 +238,9 @@ void mtDesign(char *design, xmlNodePtr tel)
   newChild(tel, "design", design);
 }
 
-int mtTEL(char *val, xmlNodePtr ctx)
+int mtTEL(char *val)
 {
-  xmlNodePtr tel = newChild(ctx, "telescope", NULL);
+  xmlNodePtr tel = newChild(ctxNode, "telescope", NULL);
   if (!rxTelCompiled) {
     int r = regcomp(&rxTel, "^\
 ([.0-9]+)-m \
@@ -311,17 +313,18 @@ int mtCOM(char *val)
   return 0;
 }
 
-int mtNUM(char *val, xmlNodePtr ctx)
+int mtNUM(char *val)
 {
-  xmlNodePtr n = newChild(ctx, "observation", NULL);
+  xmlNodePtr n = newChild(ctxNode, "observation", NULL);
   newChild(n, "count", val);
+  observationCountSet = 1;
   return 0;
 }
 
-int mtACK(char *val, xmlNodePtr ctx)
+int mtACK(char *val)
 {
   if (!contactNode)
-    contactNode = newChild(ctx, "contact", NULL);
+    contactNode = newChild(ctxNode, "contact", NULL);
   newChild(contactNode, "ackMessage", val);
   return 0;
 }
@@ -335,18 +338,18 @@ int mtAC2(char *val)
   return 0;
 }
 
-int mtHdrLine(xmlNodePtr ctx)
+int mtHdrLine()
 {
   if (!strncmp(line, "COD", 3))
-    return mtCOD(line + 4, ctx);
+    return mtCOD(line + 4);
   if (!strncmp(line, "CON", 3))
-    return mtCON(line + 4, ctx);
+    return mtCON(line + 4);
   if (!strncmp(line, "OBS", 3))
-    return mtOBS(line + 4, ctx);
+    return mtOBS(line + 4);
   if (!strncmp(line, "MEA", 3))
-    return mtMEA(line + 4, ctx);
+    return mtMEA(line + 4);
   if (!strncmp(line, "TEL", 3))
-    return mtTEL(line + 4, ctx);
+    return mtTEL(line + 4);
   if (!strncmp(line, "NET", 3))
     return mtNET(line + 4);
   if (!strncmp(line, "BND", 3))
@@ -354,9 +357,9 @@ int mtHdrLine(xmlNodePtr ctx)
   if (!strncmp(line, "COM", 3))
     return mtCOM(line + 4);
   if (!strncmp(line, "NUM", 3))
-    return mtNUM(line + 4, ctx);
+    return mtNUM(line + 4);
   if (!strncmp(line, "ACK", 3))
-    return mtACK(line + 4, ctx);
+    return mtACK(line + 4);
   if (!strncmp(line, "AC2", 3))
     return mtAC2(line + 4);
   return 0;
@@ -364,9 +367,13 @@ int mtHdrLine(xmlNodePtr ctx)
 
 int mtHdrBlock()
 {
-  xmlNodePtr ctx = newChild(root_node, "observationContext", NULL);
+  contactNode = NULL;
+  observersNode = NULL;
+  measurersNode = NULL;
+
+  ctxNode = newChild(root_node, "observationContext", NULL);
   do {
-    int r = mtHdrLine(ctx);
+    int r = mtHdrLine(ctxNode);
     if (r)
       return r;
     if (r = mtGetLine())
@@ -380,20 +387,14 @@ int mtHdrBlock()
   }
   if (ackEmail) {
     if (!contactNode)
-      contactNode = newChild(ctx, "contact", NULL);
+      contactNode = newChild(ctxNode, "contact", NULL);
     newChild(contactNode, "ackEmail", ackEmail);
     ackEmail = NULL;
   }
   if (com) {
-    newChild(ctx, "comment", com);
+    newChild(ctxNode, "comment", com);
     com = NULL;
   }
-  if (contactNode)
-    contactNode = NULL;
-  if (observersNode)
-    observersNode = NULL;
-  if (measurersNode)
-    measurersNode = NULL;
   return 0;
 }
 
@@ -710,37 +711,55 @@ void addPCNote(xmlNodePtr obs)
   newChild(obs, "notes", cc + 3);
 }
 
-void addDate(char *d, xmlNodePtr obs)
+int addDate(xmlNodePtr obs, char *d, char *logsnr)
 {
+  // fill in "broken down time" struct
   struct tm br;
-  memset(&br, sizeof br, 0);
+  memset(&br, 0, sizeof br);
+
+  // parse year, month, and integer day directly
   d[4] = 0;
   br.tm_year = atoi(d) - 1900;
   d[7] = 0;
   br.tm_mon = atoi(d + 5) - 1;  // not ordinal
   d[10] = 0;
   br.tm_mday = atoi(d + 8);     // ordinal
+
+  // fraction of day can have six digits or not.
+  // output, after conversion to hours minutes and seconds, will have
+  // integer seconds if there are less than six digits. it will have
+  // tenths of seconds if that sixth digit is present.
   d[10] = '.';
-  double dm = strtod(d + 10, NULL) * 24 * 60; // day frac as minutes
-  int min = dm;
-  br.tm_hour = min / 60;
-  br.tm_min = min % 60;
-  int e = strftime(line2, sizeof line2, "%FT%H:%M:", &br);
-  dm -= min;                    // fraction of a minute
-  // there are just two possibilities for output precision.  if last digit
-  // is not given, output is tenths of seconds, otherwise it is whole seconds.
-  sprintf(line2 + e, (d[16] == ' ') ? "%02.0fZ" : "%04.1fZ", dm * 60);
+  double dFrac = strtod(d + 10, NULL) * 24 * 60 * 60; // day frac as seconds
+  int tenths;
+  if (d[16] == ' ')
+    br.tm_sec = dFrac + .5;     // round to whole seconds
+  else {
+    br.tm_sec = dFrac * 10 + .5; // dFrac in tenths of seconds, rounded.
+    tenths = br.tm_sec % 10;
+    br.tm_sec /= 10;            // iFrac now day frac in whole seconds
+  }
+
+  // format and add
+  time_t t = mktime(&br);
+  if (t == -1)
+    return mtFileError("invalid date");
+  int e = strftime(line2, sizeof line2, "%FT%H:%M:%S", &br);
+  if (d[16] != ' ')
+    e += sprintf(line2 + e, ".%c", '0' + tenths);
+  strcpy(line2 + e, "Z");
   newChild(obs, "obsTime", line2);
 
-  // precTime
-  int pt = 1;
-  for (int i = 16; d[i] == ' ' && i > 10; i--)
-    pt *= 10;
-  sprintf(line2, "%d", pt);
-  newChild(obs, "precTime", line2);
+  if (!logsnr) {                // precTime
+    int pt = 1;
+    for (int i = 16; d[i] == ' ' && i > 10; i--)
+      pt *= 10;
+    sprintf(line2, "%d", pt);
+    newChild(obs, "precTime", line2);
+  }
 }
 
-void addRA(char *r, xmlNodePtr obs)
+void addRA(xmlNodePtr obs, char *r, char *logsnr)
 {
   r[2] = 0;
   int hr = atoi(r);
@@ -759,11 +778,13 @@ void addRA(char *r, xmlNodePtr obs)
   sprintf(line2, "%.*f", d, deg);
   newChild(obs, "ra", line2);
 
-  sprintf(line2, "%.3g", pr);
-  newChild(obs, "precRA", line2);
+  if (!logsnr) {
+    sprintf(line2, "%.3g", pr);
+    newChild(obs, "precRA", line2);
+  }
 }
 
-void addDec(char *d, xmlNodePtr obs)
+void addDec(xmlNodePtr obs, char *d, char *logsnr)
 {
   d[3] = 0;
   int deg = atoi(d + 1);
@@ -784,8 +805,10 @@ void addDec(char *d, xmlNodePtr obs)
   sprintf(line2, "%.*f", p, dd);
   newChild(obs, "dec", line2);
 
-  sprintf(line2, "%.2g", pr);
-  newChild(obs, "precDec", line2);
+  if (!logsnr) {
+    sprintf(line2, "%.2g", pr);
+    newChild(obs, "precDec", line2);
+  }
 }
 
 void addCat(xmlNodePtr obs, _Bool mag)
@@ -818,10 +841,17 @@ void addCat(xmlNodePtr obs, _Bool mag)
     newChild(obs, "photCat", n);
 }
 
-int mtObsCCD(xmlNodePtr obs)
+// NULL logsnr means generate exchange format; output all elements.
+// non-NULL logsnr means generate submit format; add logSNR but no subFmt,
+// timePrec, raPrec, or decPrec.  Presence of data for ref or disc are errors.
+//
+int mtObsCCD(xmlNodePtr obs, char *logsnr)
 {
   obs = newChild(obs, "optical", NULL);
-  newChild(obs, "subFmt", "M92");
+  if (logsnr)
+    newChild(obs, "logSNR", logsnr);
+  else
+    newChild(obs, "subFmt", "M92");
 
   // cols 0-11, parse designation, also returning designation type
   int r, desType;
@@ -830,6 +860,8 @@ int mtObsCCD(xmlNodePtr obs)
 
   // col 12, discovery
   if (line[12] != ' ' && desType == DT_MP) {
+    if (logsnr)
+      return error("discovery indicator not allowed in submission format");
     char d[2];
     d[0] = line[12];
     d[1] = 0;
@@ -848,7 +880,7 @@ int mtObsCCD(xmlNodePtr obs)
     d[17] = 0;
     if (regexec(&rxDate, d, 0, NULL, 0))
       return mtFileError("invalid date");
-    addDate(d, obs);
+    addDate(obs, d, logsnr);
   }
   {                             // cols 32-43, RA
     char r[13];
@@ -856,7 +888,7 @@ int mtObsCCD(xmlNodePtr obs)
     r[12] = 0;
     if (regexec(&rxRA, r, 0, NULL, 0))
       return mtFileError("invalid RA");
-    addRA(r, obs);
+    addRA(obs, r, logsnr);
   }
   {                             // cols 44-55, Dec
     char d[13];
@@ -864,7 +896,7 @@ int mtObsCCD(xmlNodePtr obs)
     d[12] = 0;
     if (regexec(&rxDec, d, 0, NULL, 0))
       return mtFileError("invalid Dec");
-    addDec(d, obs);
+    addDec(obs, d, logsnr);
   }
 
   if (memcmp(line + 56, "         ", 9))
@@ -887,8 +919,11 @@ int mtObsCCD(xmlNodePtr obs)
 
   // TEST just output 5 character ref for now.  maybe expand later.
   copyTrim(72, 5, line2);       // cols 72-76, reference
-  if (*line2)
+  if (*line2) {
+    if (logsnr)
+      return error("reference not allowed in submission format");
     newChild(obs, "ref", line2);
+  }
 
   copyTrim(77, 3, line2);       // cols 77-79, Obscode
   if (*line2)
@@ -975,7 +1010,7 @@ $", REG_EXTENDED)) {
   return 0;
 }
 
-int mtObsBlock()
+int mtObsBlock(char *logsnr)
 {
   if (!rxObsCompiled) {
     int r = mtCompileObsRx();
@@ -990,30 +1025,40 @@ int mtObsBlock()
 
   xmlNodePtr obs = newChild(root_node, "observations", NULL);
   int r;
+  int c = 0;
   do {
     if (strlen(line) != 80)
       return mtFileError("line not 80 columns");
     switch (line[14]) {
     case 'C':
-      r = mtObsCCD(obs);
+      r = mtObsCCD(obs, logsnr);
       break;
     default:
       r = mtFileError("column 15 unimplemented or invalid observation mode");
     }
     if (r)
       return r;
+    c++;                        // count obs
     if (r = mtGetLine())
       return r;
   }
   while (*line);
+
+  if (ctxNode && !observationCountSet) {
+    sprintf(line2, "%d", c);
+    mtNUM(line2);
+  }
+
   net = NULL;
   bnd = NULL;
+  ctxNode = NULL;
+  observationCountSet = 0;
   return 0;
 }
 
 // mt
 //
-int mt(char *fn, xmlDocPtr * pDoc)
+int mt(char *fn, xmlDocPtr * pDoc, char *logsnr)
 {
   if (!(fobs = fopen(fn, "r")))
     return error1("can't open obs file %s", fn);
@@ -1048,7 +1093,7 @@ int mt(char *fn, xmlDocPtr * pDoc)
     if (!*line)
       break;
  obsBlock:
-    if (r = mtObsBlock())
+    if (r = mtObsBlock(logsnr))
       return r;
   } while (*line);
 
