@@ -2,9 +2,10 @@
 
 C language ADES library and programs.
 
-## Contents, 2 Oct 2015
+## Version 0.1, 20 Oct 2015
 
 * Executables to validate ADES XML and PSV files and convert between the two formats.
+* An executable to convert from MPC 80 column format to XML.
 * A linkable C library with callable functions.
 * Configure/make related scripts.
 
@@ -13,10 +14,11 @@ Executables are:
 * pv - validate a PSV file in place.
 * xp - convert an XML file to a PSV file.
 * px - convert a PSV file to an XML file.
+* mx - convert an MPC 80 column file to an XML file.
 
 Each executable prints a usage message when run without arguments.
 
-See `inc/ades.h` for the library API.  See `inc/ds.h` for data structures used by the library.
+See `inc/ades.h` for the library API.
 
 ## Building
 
