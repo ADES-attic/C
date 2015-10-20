@@ -7,12 +7,13 @@
 #include <math.h>
 #include <getopt.h>
 
+#include <config.h>
 #include <ades.h>
 #include <globals.h>
 
 char *msgVersion = "\
 mx -- MPC 80 column to XML converter\n\
-Compiled %s, no version number yet.  Public domain.\n\
+Version %s, compiled %s.  Public domain.\n\
 ";
 char *msgUsage = "\
 Usage: mx {options} <input MPC 80 col file> <output .xml file>\n\
@@ -57,7 +58,12 @@ int main(int argc, char **argv)
   LIBXML_TEST_VERSION;
   char *schema = NULL;
   char *logsnr = NULL;
-  char *sOpt = "hvs:";          // no short for logsnr
+
+  // no short switch for logsnr.  logically it would be s, but s is taken
+  // and we want s to be schema for consistency across programs.  rather
+  // than pick something that doesn't make the best sense, just require
+  // a long switch.
+  char *sOpt = "hvs:";
   struct option lOpt[] = {
     {"help", no_argument, 0, 'h'},
     {"version", no_argument, 0, 'v'},
@@ -66,11 +72,8 @@ int main(int argc, char **argv)
     {0, 0, 0, 0}
   };
 
-  int ox;                       // opt index
-  int r;
-  observationBatch *o;
   while (1) {
-    int oc = getopt_long(argc, argv, sOpt, lOpt, &ox);
+    int oc = getopt_long(argc, argv, sOpt, lOpt, NULL);
     switch (oc) {
     case '?':
       exit(-1);                 // getopt already emitted err msg
@@ -79,7 +82,7 @@ int main(int argc, char **argv)
       puts(msgHelp);
       exit(0);
     case 'v':
-      printf(msgVersion, __DATE__);
+      printf(msgVersion, VERSION, __DATE__);
       exit(0);
     case 's':
       schema = optarg;
@@ -96,8 +99,11 @@ int main(int argc, char **argv)
       exit(-1);
     }
   }
- w:
-  if (r = readMPC80File(argv[optind], &o, schema, logsnr))
+
+ w:;
+  observationBatch *o;
+  int r = readMPC80File(argv[optind], &o, schema, logsnr);
+  if (r)
     errExit(r);
   if (r = writeXMLFile(o, argv[optind + 1]))
     errExit(r);
