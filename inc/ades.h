@@ -2,18 +2,19 @@
 // ades.h -- ades library API
 //
 // Definitions here are intended to make up the public API for the ades library.
+//
+// Synopsis:
+// int readMPC80File(char *fn, observationBatch ** o,
+//                   char *schema, char *logsnr);
+// int readPSVFile(char *fn, observationBatch ** o, char *schema);
+// int readXMLFile(char *fn, observationBatch ** o, char *schema);
+// int writeXMLFile(observationBatch * o, char *fn);
+// int writePSVFile(observationBatch * o, char *fn,
+//                  _Bool defaultPSV, int pipeAlign);
+//
+// The `observationBatch` type is documented in ds.h.
 
 #include <ds.h>
-
-// readXMLFile -- Read an XML file, parsing it into the observationBatch
-// C struct, optionally validating.
-//
-// Argument fn must be the file name of an ADES XML file, observationBatch
-// must be a non-null pointer to an observationBatch pointer.  Argument
-// schema must either be the file name of an ADES XSD file or a null pointer.
-// If non-null, the function will validate the XML, if null there is no
-// validation.
-int readXMLFile(char *fn, observationBatch ** o, char *schema);
 
 // readMPC80File -- Read an MPC 80 column observation file, parsing it into
 // the observationBatch C struct, optionally validating.
@@ -36,16 +37,21 @@ int readMPC80File(char *fn, observationBatch ** o, char *schema, char *logsnr);
 // validation.
 int readPSVFile(char *fn, observationBatch ** o, char *schema);
 
-// writeXMLFile -- Write an ADES XML file from an observationBatch struct.
+// readXMLFile -- Read an XML file, parsing it into the observationBatch
+// C struct, optionally validating.
 //
-// Argument observationBatch must be a non-null pointer to an observationBatch
-// struct with valid data.  Output XML is written to fn.
-int writeXMLFile(observationBatch * o, char *fn);
+// Argument fn must be the file name of an ADES XML file, observationBatch
+// must be a non-null pointer to an observationBatch pointer.  Argument
+// schema must either be the file name of an ADES XSD file or a null pointer.
+// If non-null, the function will validate the XML, if null there is no
+// validation.
+int readXMLFile(char *fn, observationBatch ** o, char *schema);
 
-// writeXMLFile -- Write an ADES XML file from an observationBatch struct.
+// writePSVFile -- Write an ADES PSV file from an observationBatch struct.
 //
 // Argument observationBatch must be a non-null pointer to an observationBatch
-// struct with valid data.  Output XML is written to fn.
+// struct with valid data.  Output PSV is written to fn.  Readability macros
+// for defaultPSV and pipeAlign defined below.
 int writePSVFile(observationBatch * o, char *fn,
                  _Bool defaultPSV, int pipeAlign);
 
@@ -75,3 +81,9 @@ int writePSVFile(observationBatch * o, char *fn,
 #define PA_NONE 0
 #define PA_DATA 1
 #define PA_HDRS 2
+
+// writeXMLFile -- Write an ADES XML file from an observationBatch struct.
+//
+// Argument observationBatch must be a non-null pointer to an observationBatch
+// struct with valid data.  Output XML is written to fn.
+int writeXMLFile(observationBatch * o, char *fn);

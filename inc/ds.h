@@ -1,5 +1,21 @@
 //
 // ds.h -- data structures implementing the ADES.
+//
+// There is one top level struct, `observationBatch`.  It is a list of
+// `observationSegment`s, where an observationSegment contains either an
+// `observationContext` or an `obsList`.  The observationContext struct
+// further contains structs for the various top-level headings or
+// "group keywords."  An obsList contains `observations`, which is an array
+// of `obsRec`s, each obsRec representing what we commonly think of as an
+// "observation".
+//
+// The ADES shows `optical` as an example of an XML element representing an
+// observation.  The current ades.xsd adds a `radar` element for completeness.
+// The obsRec defined here encompasses both types of observation elements
+// however.  It is a fixed length array of all possible fields of an
+// observation.  Each field of an obsRec is a `dVal` which is simply a
+// `char *`.  Then filled fields contain data as null-terminated UTF-8;
+// unfilled fields are null pointers.
 
 #ifndef DS_H
 #define DS_H
