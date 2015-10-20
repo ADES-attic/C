@@ -44,6 +44,12 @@ Witout --logsnr:\n\
 * Observation count elements are generated only if the NUM header keyword\n\
   is present.\n\
 * Elements precTime, precRA, and precDec are generated.\n\
+\n\
+Example schema are at https://github.com/IAU-ADES/xsd.  There are\n\
+currently two, `exchange.xml` and `submit.xml`.  The exchange schema\n\
+is general purpose and suitable for representing archival observations.\n\
+The submit schema encodes requirements for data submitted to the MPC\n\
+as new observations.\n\
 ";
 
 int main(int argc, char **argv)
