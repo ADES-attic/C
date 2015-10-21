@@ -6,11 +6,13 @@
 #include <getopt.h>
 
 #include <config.h>
+#include <commit.h>
 #include <globals.h>
 
 char *msgVersion = "\
-xv -- XML Validator\n\
-Version %s, compiled %s.  Public domain.\n\
+xv -- XML Validator -- Public domain.\n\
+Version %s %s\n\
+Compiled: %s.\n\
 ";
 
 char *msgUsage = "\
@@ -34,7 +36,7 @@ int main(int argc, char **argv)
     case '?':
       exit(-1);                 // getopt already emitted err msg
     case 'v':
-      printf(msgVersion, VERSION, __DATE__);
+      printf(msgVersion, VERSION, COMMIT, __DATE__);
       exit(0);
     case -1:
       if (argc - optind == 2)

@@ -15,6 +15,7 @@ libades.a
 Makefile
 aclocal.m4
 autom4te.cache/
+commit.h
 config.h
 config.log
 config.status

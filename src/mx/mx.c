@@ -8,12 +8,14 @@
 #include <getopt.h>
 
 #include <config.h>
+#include <commit.h>
 #include <ades.h>
 #include <globals.h>
 
 char *msgVersion = "\
-mx -- MPC 80 column to XML converter\n\
-Version %s, compiled %s.  Public domain.\n\
+mx -- MPC 80 column to XML converter -- Public domain.\n\
+Version %s %s\n\
+Compiled: %s.\n\
 ";
 char *msgUsage = "\
 Usage: mx {options} <input MPC 80 col file> <output .xml file>\n\
@@ -82,7 +84,7 @@ int main(int argc, char **argv)
       puts(msgHelp);
       exit(0);
     case 'v':
-      printf(msgVersion, VERSION, __DATE__);
+      printf(msgVersion, VERSION, COMMIT, __DATE__);
       exit(0);
     case 's':
       schema = optarg;

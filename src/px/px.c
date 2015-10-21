@@ -7,12 +7,14 @@
 #include <getopt.h>
 
 #include <config.h>
+#include <commit.h>
 #include <ades.h>
 #include <globals.h>
 
 char *msgVersion = "\
-px -- PSV to XML converter\n\
-Version %s, compiled %s.  Public domain.\n\
+px -- PSV to XML converter -- Public domain.\n\
+Version %s %s\n\
+Compiled: %s.\n\
 ";
 
 char *msgUsage = "\
@@ -42,7 +44,7 @@ int main(int argc, char **argv)
     case '?':
       exit(-1);                 // getopt already emitted err msg
     case 'v':
-      printf(msgVersion, VERSION, __DATE__);
+      printf(msgVersion, VERSION, COMMIT, __DATE__);
       exit(0);
     case 's':
       schema = optarg;
