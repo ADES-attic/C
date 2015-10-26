@@ -15,6 +15,9 @@
 
 @SET_MAKE@
 
+# Automake input file
+# See https://www.gnu.org/software/automake/manual/
+
 
 
 
@@ -113,7 +116,7 @@ am_libades_la_OBJECTS = libades_la-globals.lo libades_la-ms.lo \
 libades_la_OBJECTS = $(am_libades_la_OBJECTS)
 libades_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libades_la_CFLAGS) \
-	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+	$(CFLAGS) $(libades_la_LDFLAGS) $(LDFLAGS) -o $@
 PROGRAMS = $(bin_PROGRAMS)
 am_mx_OBJECTS = mx-mx.$(OBJEXT)
 mx_OBJECTS = $(am_mx_OBJECTS)
@@ -304,14 +307,26 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+
+# libtool likes this
 ACLOCAL_AMFLAGS = -I m4
-dist_doc_DATA = readme.md catalogs.csv program_codes.txt telescopes.csv commit.h
+
+# See explanation at https://www.gnu.org/software/automake/manual/automake.html#amhello_0027s-Makefile_002eam-Setup-Explained.
+dist_doc_DATA = readme.md catalogs.csv program_codes.txt telescopes.csv
+
+# rule for extracting git version information.
+# see hacking.md in this directory.
 BUILT_SOURCES = $(top_builddir)/commit.h
+
+# ades library API headers, included in tarball
 include_HEADERS = inc/ades.h inc/ds.h
+
+# build ades library
 lib_LTLIBRARIES = libades.la
 libades_la_SOURCES = inc/globals.h src/ades/globals.c src/ades/ms.c src/ades/mt.c src/ades/ps.c src/ades/sp.c src/ades/sx.c src/ades/tv.c src/ades/pt.c src/ades/ts.c src/ades/xs.c
 libades_la_CFLAGS = -std=c99 -I$(top_srcdir)/inc $(LIBXML2_CFLAGS)
 libades_la_LIBADD = $(LIBXML2_LIBS)
+libades_la_LDFLAGS = -version-info 0:0:0
 mx_SOURCES = src/mx/mx.c commit.h
 mx_CFLAGS = -std=c99 -I$(top_srcdir)/inc $(LIBXML2_CFLAGS)
 mx_LDADD = libades.la

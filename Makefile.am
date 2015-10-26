@@ -1,18 +1,29 @@
+# Automake input file
+# See https://www.gnu.org/software/automake/manual/
+
+# libtool likes this
 ACLOCAL_AMFLAGS = -I m4
 
-dist_doc_DATA = readme.md catalogs.csv program_codes.txt telescopes.csv commit.h
+# See explanation at https://www.gnu.org/software/automake/manual/automake.html#amhello_0027s-Makefile_002eam-Setup-Explained.
+dist_doc_DATA = readme.md catalogs.csv program_codes.txt telescopes.csv
 
+# rule for extracting git version information.
+# see hacking.md in this directory.
 BUILT_SOURCES = $(top_builddir)/commit.h
 $(top_builddir)/commit.h: $(shell ls .git/index)
 	./commit.py
 
+# ades library API headers, included in tarball
 include_HEADERS = inc/ades.h inc/ds.h
 
+# build ades library
 lib_LTLIBRARIES = libades.la
 libades_la_SOURCES = inc/globals.h src/ades/globals.c src/ades/ms.c src/ades/mt.c src/ades/ps.c src/ades/sp.c src/ades/sx.c src/ades/tv.c src/ades/pt.c src/ades/ts.c src/ades/xs.c
 libades_la_CFLAGS = -std=c99 -I$(top_srcdir)/inc $(LIBXML2_CFLAGS)
 libades_la_LIBADD = $(LIBXML2_LIBS)
+libades_la_LDFLAGS = -version-info 0:0:0
 
+# build stand-alone executables
 bin_PROGRAMS = mx px pv xp xv
 
 mx_SOURCES = src/mx/mx.c commit.h
