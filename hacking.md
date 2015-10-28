@@ -58,6 +58,25 @@ specifies an ordering of observation fields.  Elements of the tree would have
 to be sorted somehow before writing.  The ts and sx functions exist though
 and represent an easy path to ADES-ordered XML output.
 
+## Wait, if everything goes through XML in memory, do we need the C struct?
+We might not.  If all people ever use are stand-alone executables, then the
+in-memory representation doesn't matter.  Or if the library is linked, but it's
+only ever linked from other C programs, then the libxml2 tree representation
+could be used for everything.
+
+One advantage of the C struct however is that it is all in ADES terms like
+observation and trkSub whereas the libxml2 tree requires you to work in
+abstract terms of child sibling element node and so on.  Libxml2 is also
+a bigger API to learn.  The C struct defined in inc/ds.h is independent of
+libxml2 and has no dependencies on libxml2.  So a replacement ades library
+in the future might be based on a different xml library and code written to
+the C structs in ds.h would not have to change.
+
+Finally it may be desirable to use the ades library from other programming
+languages besides C.  The struct is relatively simple and it should be
+possible to map it into most programming languages.  A Python example
+is at https://github.com/IAU-ADES/Python/tree/master/mlib.
+
 ## --version
 The stand-alone programs have -v output that includes source information.
 For example,
