@@ -31,3 +31,5 @@ config.sub
 *.o
 stamp-h1
 .libs/
+.dirstamp
+compile

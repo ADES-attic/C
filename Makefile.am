@@ -7,6 +7,10 @@ ACLOCAL_AMFLAGS = -I m4
 # See explanation at https://www.gnu.org/software/automake/manual/automake.html#amhello_0027s-Makefile_002eam-Setup-Explained.
 dist_doc_DATA = readme.md catalogs.csv program_codes.txt telescopes.csv
 
+# This needed for $(shell to work.
+# TODO is $(shell needed? Can it be done some other way?
+AUTOMAKE_OPTIONS = -Wno-portability
+
 # rule for extracting git version information.
 # see hacking.md in this directory.
 BUILT_SOURCES = $(top_builddir)/commit.h
