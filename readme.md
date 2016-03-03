@@ -22,8 +22,13 @@ See `inc/ades.h` for the library API.
 
 ## Building
 
-The standard ./configure, make sequence should work.  Configure --prefix= and make install if you like.
+When staring from a tarball, unpack as usual and then the standard
+`./configure`, `make` sequence should work.  Configure --prefix= and
+make install if you like.
 
-The provided ./configure should work.  To rebuild it though the magic spell is
+When starting from a cloned source repository however, start with
 
     autoreconf --install
+
+This will install and generate various scripts needed by configure.
+You can then proceed with ./configure and make as usual.
