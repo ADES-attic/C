@@ -1068,6 +1068,10 @@ int mt(char *fn, xmlDocPtr * pDoc, char *logsnr)
   if (!*line)
     return error1("Obs file %s empty or unreadable", fn);
 
+  // tolerate bom
+  if (!memcmp(line, "\xef\xbb\xbf", 3))
+    strcpy(line, line + 3);
+
   doc = xmlNewDoc("1.0");
   root_node = xmlNewNode(NULL, "observationBatch");
   root_node->line = 1;

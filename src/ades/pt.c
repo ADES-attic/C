@@ -359,21 +359,21 @@ int pt(char *fn, xmlDocPtr * pDoc)
   if (!*line)
     return error1("PSV file %s empty or unreadable", fn);
 
+  // tolerate bom
+  if (!memcmp(line, "\xef\xbb\xbf", 3))
+    strcpy(line, line + 3);
+
   doc = xmlNewDoc("1.0");
   root_node = xmlNewNode(NULL, "observationBatch");
   root_node->line = 1;
   xmlDocSetRootElement(doc, root_node);
 
   do {
-    if (*line == '#')
-      ptHeader();
-    else
-      ptObs();
-    r = getPSVLine();
-    if (r)
+    if (r = (*line == '#') ? ptHeader() : ptObs())
+      return r;
+    if (r = getPSVLine())
       return r;
   } while (*line);
-
   *pDoc = doc;
   return 0;
 }
