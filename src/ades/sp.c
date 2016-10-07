@@ -515,6 +515,9 @@ int writePSVFile(observationBatch * o, char *fn,
   defp = defaultPSV;
   algn = pipeAlign;
 
+  if (o->adesVersion)
+    fprintf(fpsv, "# adesVersion %s\n", o->adesVersion);
+
   if (o->len)
     writeSeg(o->segments);
   for (int i = 1; i < o->len; i++) {

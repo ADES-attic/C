@@ -184,8 +184,9 @@ typedef struct {
   obsList *obs;
 } observationSegment;
 
-// root element: a list of observationSegments
+// root element: a version number followed by a list of observationSegments
 typedef struct {
+  dVal adesVersion;
   int len;
   observationSegment *segments;
 } observationBatch;

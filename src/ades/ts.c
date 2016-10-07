@@ -272,7 +272,13 @@ void ts(xmlDocPtr doc, observationBatch ** obs)
   observationBatch *o = calloc(1, sizeof(observationBatch));
   *obs = o;
   xmlNodePtr root_node = xmlDocGetRootElement(doc);
-  xmlNodePtr xSeg = xmlFirstElementChild(root_node);
+  xmlNodePtr x1 = xmlFirstElementChild(root_node);
+  xmlNodePtr xSeg = x1;
+  printf("ts: x1->name: %s\n", x1->name);
+  if (!strcmp(x1->name, "adesVersion")) {
+    o->adesVersion = strdup(xmlNodeGetContent(x1));
+    xSeg = xmlNextElementSibling(x1);
+  }
   while (xSeg) {
     int last = o->len;
     o->len++;
